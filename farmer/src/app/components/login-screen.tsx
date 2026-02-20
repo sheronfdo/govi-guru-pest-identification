@@ -9,11 +9,64 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [selectedLanguage, setSelectedLanguage] = useState('english');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleRegister = async () => {
+    if (!phoneNumber || !password) {
+      setError('Please enter phone and password to register');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/farmers/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          password,
+          full_name: null,
+          region: null,
+        }),
+      });
+      if (!res.ok) throw new Error('Registration failed');
+      await res.json();
+      const loginRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/farmer/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: phoneNumber, password, role: 'farmer' }),
+      });
+      if (!loginRes.ok) throw new Error('Login failed');
+      const data = await loginRes.json();
+      localStorage.setItem('gg_token', data.access_token);
+      onLogin('Farmer');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login - in real app would validate credentials
-    onLogin('Sunil');
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/farmer/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: phoneNumber, password, role: 'farmer' }),
+      });
+      if (!res.ok) throw new Error('Invalid credentials');
+      const data = await res.json();
+      localStorage.setItem('gg_token', data.access_token);
+      onLogin('Farmer');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -100,13 +153,18 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           type="submit"
           className="w-full py-5 rounded-lg text-xl font-bold text-white transition-all hover:opacity-90"
           style={{ backgroundColor: '#4CAF50' }}
+          disabled={loading}
         >
-          Login
+          {loading ? 'Logging in...' : 'Login'}
         </button>
+
+        {error && (
+          <p className="text-center mt-4 text-base text-red-600">{error}</p>
+        )}
 
         <p className="text-center mt-6 text-base">
           <span style={{ color: '#666' }}>New Farmer? </span>
-          <button type="button" className="font-semibold" style={{ color: '#4CAF50' }}>
+          <button type="button" className="font-semibold" style={{ color: '#4CAF50' }} onClick={handleRegister}>
             Register Here
           </button>
         </p>

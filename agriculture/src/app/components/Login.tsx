@@ -17,6 +17,8 @@ export default function Login({ onLogin }: LoginProps) {
     email: '',
     password: ''
   });
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const [signupForm, setSignupForm] = useState({
     fullName: '',
@@ -29,11 +31,32 @@ export default function Login({ onLogin }: LoginProps) {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginForm.email && loginForm.password) {
-      // Mock login
-      onLogin('Dr. Rajesh Kumar', 'Western Province', 'AGO-2024-WP-001');
-      toast.success('Successfully logged in!');
-    }
+    if (!loginForm.email || !loginForm.password) return;
+    setLoginError('');
+    setLoginLoading(true);
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/officer/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: loginForm.email, password: loginForm.password, role: 'officer' }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Invalid credentials');
+        return res.json();
+      })
+      .then(async (data) => {
+        localStorage.setItem('gg_token', data.access_token);
+        const meRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+          headers: { Authorization: `Bearer ${data.access_token}` },
+        });
+        if (!meRes.ok) throw new Error('Failed to load profile');
+        const me = await meRes.json();
+        onLogin(me.full_name || 'Officer', me.region || 'Unknown', me.officer_id || '');
+        toast.success('Successfully logged in!');
+      })
+      .catch((err) => {
+        setLoginError(err instanceof Error ? err.message : 'Login failed');
+      })
+      .finally(() => setLoginLoading(false));
   };
 
   const handleSignup = (e: React.FormEvent) => {
@@ -43,12 +66,29 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
     if (signupForm.fullName && signupForm.officerId && signupForm.region) {
-      toast.success('Access request submitted! Admin approval pending.');
-      // Switch to login tab
-      setTimeout(() => {
-        const loginTab = document.querySelector('[value="login"]') as HTMLElement;
-        loginTab?.click();
-      }, 2000);
+      fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/officers/request-access`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: signupForm.fullName,
+          officer_id: signupForm.officerId,
+          region: signupForm.region,
+          phone: signupForm.phone,
+          password: signupForm.password,
+        }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Request failed');
+          return res.json();
+        })
+        .then(() => {
+          toast.success('Access request submitted! Admin approval pending.');
+          setTimeout(() => {
+            const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+            loginTab?.click();
+          }, 2000);
+        })
+        .catch(() => toast.error('Failed to submit request'));
     }
   };
 
@@ -117,10 +157,13 @@ export default function Login({ onLogin }: LoginProps) {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full bg-[#1976D2] hover:bg-[#1565C0]">
-                  Login to Portal
+                <Button type="submit" className="w-full bg-[#1976D2] hover:bg-[#1565C0]" disabled={loginLoading}>
+                  {loginLoading ? 'Logging in...' : 'Login to Portal'}
                 </Button>
               </form>
+              {loginError && (
+                <div className="mt-3 text-sm text-red-600 text-center">{loginError}</div>
+              )}
             </TabsContent>
             
             <TabsContent value="signup">

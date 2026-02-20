@@ -14,11 +14,30 @@ export function Login({ onLogin }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would validate credentials here
-    onLogin();
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: email, password, role: 'admin' }),
+      });
+      if (!res.ok) {
+        throw new Error('Invalid credentials');
+      }
+      const data = await res.json();
+      localStorage.setItem('gg_token', data.access_token);
+      onLogin();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -102,11 +121,16 @@ export function Login({ onLogin }: LoginProps) {
             type="submit"
             className="w-full gap-2"
             style={{ backgroundColor: '#2E7D32' }}
+            disabled={loading}
           >
             <LogIn className="w-4 h-4" />
-            Sign In
+            {loading ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
+
+        {error && (
+          <div className="mt-4 text-sm text-red-600 text-center">{error}</div>
+        )}
 
         {/* Demo Credentials */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">

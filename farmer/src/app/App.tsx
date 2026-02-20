@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LoginScreen } from './components/login-screen';
 import { HomeDashboard } from './components/home-dashboard';
 import { CameraScreen } from './components/camera-screen';
@@ -80,3 +80,21 @@ export default function App() {
     </div>
   );
 }
+  useEffect(() => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Unauthorized');
+        return res.json();
+      })
+      .then((me) => {
+        setFarmerName(me.full_name || 'Farmer');
+        setCurrentScreen('home');
+      })
+      .catch(() => {
+        localStorage.removeItem('gg_token');
+      });
+  }, []);

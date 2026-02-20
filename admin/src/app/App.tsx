@@ -20,7 +20,9 @@ import { Settings } from './components/Settings';
 type Page = 'dashboard' | 'users' | 'pests' | 'analytics' | 'feedback' | 'settings';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => !!localStorage.getItem('gg_token')
+  );
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
   const menuItems = [
@@ -39,6 +41,7 @@ export default function App() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentPage('dashboard');
+    localStorage.removeItem('gg_token');
   };
 
   const renderPage = () => {

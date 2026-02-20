@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import VerificationWorkbench from './components/VerificationWorkbench';
@@ -17,6 +17,29 @@ function App() {
     officerId: ''
   });
 
+  useEffect(() => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Unauthorized');
+        return res.json();
+      })
+      .then((me) => {
+        setIsAuthenticated(true);
+        setOfficerData({
+          name: me.full_name || 'Officer',
+          region: me.region || '',
+          officerId: me.officer_id || '',
+        });
+      })
+      .catch(() => {
+        localStorage.removeItem('gg_token');
+      });
+  }, []);
+
   const handleLogin = (name: string, region: string, officerId: string) => {
     setIsAuthenticated(true);
     setOfficerData({ name, region, officerId });
@@ -25,6 +48,7 @@ function App() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setOfficerData({ name: '', region: '', officerId: '' });
+    localStorage.removeItem('gg_token');
   };
 
   return (
