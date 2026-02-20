@@ -18,6 +18,10 @@ def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == email).first()
 
 
+def get_user_by_phone(db: Session, phone: str) -> Optional[User]:
+    return db.query(User).filter(User.phone == phone).first()
+
+
 def list_users(
     db: Session,
     role: Optional[str] = None,

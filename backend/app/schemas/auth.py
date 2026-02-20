@@ -26,7 +26,8 @@ class UserProfile(BaseModel):
 
 
 class FarmerRegisterRequest(BaseModel):
-    phone: str
+    email: EmailStr
+    phone: Optional[str] = None
     password: str
     full_name: Optional[str] = None
     region: Optional[str] = None

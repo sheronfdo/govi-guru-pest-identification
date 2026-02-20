@@ -46,6 +46,7 @@ export function PestDatabase() {
     kem: '',
     imageFile: null as File | null,
   });
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
 
   const token = localStorage.getItem('gg_token');
 
@@ -133,7 +134,9 @@ export function PestDatabase() {
       crop_stage: pest.cropStage || '',
       chemical_methods: pest.chemical || '',
       kem_methods: pest.kem || '',
+      image: pest.image,
     });
+    setEditImageFile(null);
   };
 
   const handleUpdatePest = async (e: React.FormEvent) => {
@@ -146,7 +149,18 @@ export function PestDatabase() {
         body: JSON.stringify(editPest),
       });
       if (!res.ok) throw new Error('Failed to update pest');
+      if (editImageFile) {
+        const imgForm = new FormData();
+        imgForm.append('image', editImageFile);
+        const imgRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/pests/${editPest.id}/image`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: imgForm,
+        });
+        if (!imgRes.ok) throw new Error('Failed to update image');
+      }
       setEditPest(null);
+      setEditImageFile(null);
       loadPests();
       toast.success('Pest updated successfully');
     } catch (err) {
@@ -250,6 +264,16 @@ export function PestDatabase() {
                     onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
                   />
                 </label>
+                {formData.imageFile && (
+                  <div className="mt-3 flex items-center gap-4">
+                    <img
+                      src={URL.createObjectURL(formData.imageFile)}
+                      alt="Preview"
+                      className="w-20 h-20 object-cover rounded"
+                    />
+                    <span className="text-sm text-gray-600">{formData.imageFile.name}</span>
+                  </div>
+                )}
               </div>
 
               {/* Affected Crop Stage */}
@@ -434,6 +458,33 @@ export function PestDatabase() {
           </DialogHeader>
           {editPest && (
             <form className="space-y-4 mt-4" onSubmit={handleUpdatePest}>
+              <div className="space-y-2">
+                <Label>Image</Label>
+                <div className="flex items-center gap-4">
+                  {editImageFile ? (
+                    <img
+                      src={URL.createObjectURL(editImageFile)}
+                      alt="Preview"
+                      className="w-24 h-24 object-cover rounded"
+                    />
+                  ) : editPest.image ? (
+                    <img src={editPest.image} alt="Current" className="w-24 h-24 object-cover rounded" />
+                  ) : (
+                    <div className="w-24 h-24 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                      No image
+                    </div>
+                  )}
+                  <label className="text-sm text-blue-600 hover:underline cursor-pointer">
+                    Replace Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => setEditImageFile(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                </div>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Pest Name (English)</Label>

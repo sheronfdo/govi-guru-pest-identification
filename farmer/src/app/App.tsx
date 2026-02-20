@@ -9,6 +9,7 @@ import { HistoryScreen } from './components/history-screen';
 type Screen = 'login' | 'home' | 'camera' | 'result' | 'expert' | 'history';
 
 export default function App() {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
   const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [farmerName, setFarmerName] = useState('');
   const [capturedPest, setCapturedPest] = useState<string>('');
@@ -43,47 +44,10 @@ export default function App() {
     setCurrentScreen('result');
   };
 
-  return (
-    <div className="size-full">
-      {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} />}
-      
-      {currentScreen === 'home' && (
-        <HomeDashboard
-          farmerName={farmerName}
-          onNavigate={handleNavigate}
-          activeTab="home"
-        />
-      )}
-      
-      {currentScreen === 'camera' && (
-        <CameraScreen onBack={handleBackToHome} onCapture={handleCapture} />
-      )}
-      
-      {currentScreen === 'result' && (
-        <ResultScreen
-          pestType={capturedPest}
-          onBack={handleBackToHome}
-          onAskExpert={handleAskExpert}
-        />
-      )}
-      
-      {currentScreen === 'expert' && (
-        <ExpertScreen onBack={handleBackToHome} hasAttachment={fromResult} />
-      )}
-      
-      {currentScreen === 'history' && (
-        <HistoryScreen
-          onBack={handleBackToHome}
-          onSelectPest={handleSelectPestFromHistory}
-        />
-      )}
-    </div>
-  );
-}
   useEffect(() => {
     const token = localStorage.getItem('gg_token');
     if (!token) return;
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+    fetch(`${apiBase}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -98,3 +62,41 @@ export default function App() {
         localStorage.removeItem('gg_token');
       });
   }, []);
+
+  return (
+    <div className="size-full">
+      {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} />}
+
+      {currentScreen === 'home' && (
+        <HomeDashboard
+          farmerName={farmerName}
+          onNavigate={handleNavigate}
+          activeTab="home"
+        />
+      )}
+
+      {currentScreen === 'camera' && (
+        <CameraScreen onBack={handleBackToHome} onCapture={handleCapture} />
+      )}
+
+      {currentScreen === 'result' && (
+        <ResultScreen
+          pestType={capturedPest}
+          onBack={handleBackToHome}
+          onAskExpert={handleAskExpert}
+        />
+      )}
+
+      {currentScreen === 'expert' && (
+        <ExpertScreen onBack={handleBackToHome} hasAttachment={fromResult} />
+      )}
+
+      {currentScreen === 'history' && (
+        <HistoryScreen
+          onBack={handleBackToHome}
+          onSelectPest={handleSelectPestFromHistory}
+        />
+      )}
+    </div>
+  );
+}

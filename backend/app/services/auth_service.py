@@ -2,8 +2,9 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.core.security import verify_password, get_password_hash, create_access_token
+from app.core.config import settings
 from app.models.user import User
-from app.repositories.user_repo import get_user_by_identifier, get_user_by_email, create_user
+from app.repositories.user_repo import get_user_by_identifier, get_user_by_email, get_user_by_phone, create_user
 
 
 class AuthService:
@@ -21,9 +22,20 @@ class AuthService:
         return create_access_token(subject=str(user.id), role=user.role)
 
     @staticmethod
-    def register_farmer(db: Session, phone: str, password: str, full_name: str | None, region: str | None) -> User:
+    def register_farmer(
+        db: Session,
+        email: str,
+        phone: str | None,
+        password: str,
+        full_name: str | None,
+        region: str | None,
+    ) -> User:
+        if get_user_by_email(db, email):
+            raise ValueError("Email already registered")
+        if phone and get_user_by_phone(db, phone):
+            raise ValueError("Phone number already registered")
         user = User(
-            email=f"farmer_{phone}@goviguru.local",
+            email=email,
             phone=phone,
             hashed_password=get_password_hash(password),
             full_name=full_name,

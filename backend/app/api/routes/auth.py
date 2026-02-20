@@ -52,8 +52,18 @@ def me(current_user=Depends(get_current_user)):
 
 @router.post("/farmers/register", response_model=UserProfile)
 def register_farmer(payload: FarmerRegisterRequest, db: Session = Depends(get_db)):
-    user = AuthService.register_farmer(db, payload.phone, payload.password, payload.full_name, payload.region)
-    return user
+    try:
+        user = AuthService.register_farmer(
+            db,
+            payload.email,
+            payload.phone,
+            payload.password,
+            payload.full_name,
+            payload.region,
+        )
+        return user
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
 
 
 @router.post("/officers/request-access", response_model=UserProfile)
