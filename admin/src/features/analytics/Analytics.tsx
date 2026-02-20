@@ -1,6 +1,6 @@
 import { Download, TrendingUp } from 'lucide-react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
+import { Card } from '../../shared/ui/card';
+import { Button } from '../../shared/ui/button';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export function Analytics() {

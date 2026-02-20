@@ -9,13 +9,13 @@ import {
   LogOut,
   Leaf,
 } from 'lucide-react';
-import { Login } from './components/Login';
-import { DashboardHome } from './components/DashboardHome';
-import { UserManagement } from './components/UserManagement';
-import { PestDatabase } from './components/PestDatabase';
-import { Analytics } from './components/Analytics';
-import { Feedback } from './components/Feedback';
-import { Settings } from './components/Settings';
+import { Login } from '../features/auth/Login';
+import { DashboardHome } from '../features/dashboard/DashboardHome';
+import { UserManagement } from '../features/users/UserManagement';
+import { PestDatabase } from '../features/pests/PestDatabase';
+import { Analytics } from '../features/analytics/Analytics';
+import { Feedback } from '../features/feedback/Feedback';
+import { Settings } from '../features/settings/Settings';
 
 type Page = 'dashboard' | 'users' | 'pests' | 'analytics' | 'feedback' | 'settings';
 

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Leaf, LogIn, Eye, EyeOff } from 'lucide-react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Checkbox } from './ui/checkbox';
+import { Card } from '../../shared/ui/card';
+import { Button } from '../../shared/ui/button';
+import { Input } from '../../shared/ui/input';
+import { Label } from '../../shared/ui/label';
+import { Checkbox } from '../../shared/ui/checkbox';
 
 interface LoginProps {
   onLogin: () => void;

@@ -1,5 +1,5 @@
 import { Activity, Server, Database, AlertCircle } from 'lucide-react';
-import { Card } from './ui/card';
+import { Card } from '../../shared/ui/card';
 
 export function DashboardHome() {
   const stats = [

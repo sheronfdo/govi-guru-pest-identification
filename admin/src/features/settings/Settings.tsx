@@ -1,10 +1,10 @@
 import { Save, Bell, Shield, Database, Globe } from 'lucide-react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Switch } from './ui/switch';
-import { Separator } from './ui/separator';
+import { Card } from '../../shared/ui/card';
+import { Button } from '../../shared/ui/button';
+import { Input } from '../../shared/ui/input';
+import { Label } from '../../shared/ui/label';
+import { Switch } from '../../shared/ui/switch';
+import { Separator } from '../../shared/ui/separator';
 
 export function Settings() {
   return (

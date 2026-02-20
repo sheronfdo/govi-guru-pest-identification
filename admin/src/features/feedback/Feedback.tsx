@@ -1,7 +1,7 @@
 import { MessageSquare, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+import { Card } from '../../shared/ui/card';
+import { Badge } from '../../shared/ui/badge';
+import { Button } from '../../shared/ui/button';
 
 export function Feedback() {
   const feedbacks = [

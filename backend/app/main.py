@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.api.routes import api_router
@@ -7,6 +8,8 @@ from app.db.session import engine
 from app.db.base import Base
 from app.services.auth_service import AuthService
 from app.db.session import SessionLocal
+from app.core.storage import ensure_upload_dir
+from app import models  # noqa: F401
 
 
 def create_app() -> FastAPI:
@@ -26,6 +29,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(api_router, prefix=settings.api_v1_prefix)
+    ensure_upload_dir()
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
     @app.on_event("startup")
     def startup() -> None:
