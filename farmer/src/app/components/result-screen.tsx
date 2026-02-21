@@ -64,6 +64,10 @@ export function ResultScreen({ result, onBack, onAskExpert }: ResultScreenProps)
               <h3 className="text-xl font-bold" style={{ color: '#333' }}>{result.name}</h3>
               <p className="text-sm italic" style={{ color: '#666' }}>{result.scientificName || ''}</p>
               <p className="text-base font-semibold mt-1" style={{ color: '#4CAF50' }}>Match Found!</p>
+              <p className="text-xs text-gray-500 mt-1">Confidence: {Math.round(result.confidence * 100)}%</p>
+              {result.cropStage && (
+                <p className="text-xs text-gray-500">Crop Stage: {result.cropStage}</p>
+              )}
             </div>
           </div>
         </div>

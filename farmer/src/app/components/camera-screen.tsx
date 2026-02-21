@@ -5,9 +5,10 @@ interface CameraScreenProps {
   onCapture: (file: File) => void;
   loading?: boolean;
   error?: string;
+  progress?: number;
 }
 
-export function CameraScreen({ onBack, onCapture, loading = false, error }: CameraScreenProps) {
+export function CameraScreen({ onBack, onCapture, loading = false, error, progress = 0 }: CameraScreenProps) {
   const handleFileChange = (file?: File | null) => {
     if (!file) return;
     onCapture(file);
@@ -104,6 +105,15 @@ export function CameraScreen({ onBack, onCapture, loading = false, error }: Came
           </label>
         </div>
       </div>
+
+      {loading && (
+        <div className="px-6 pb-4">
+          <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="text-xs text-gray-300 text-center mt-2">{progress}% uploaded</p>
+        </div>
+      )}
 
       {error && (
         <div className="px-6 pb-6">

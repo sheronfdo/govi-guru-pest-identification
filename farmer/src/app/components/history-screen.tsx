@@ -1,8 +1,9 @@
 import { ArrowLeft, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface HistoryScreenProps {
   onBack: () => void;
-  onSelectPest: () => void;
+  onSelectPest: (scanId: number) => void;
 }
 
 interface HistoryItem {
@@ -14,36 +15,36 @@ interface HistoryItem {
 }
 
 export function HistoryScreen({ onBack, onSelectPest }: HistoryScreenProps) {
-  const historyData: HistoryItem[] = [
-    {
-      id: '1',
-      date: '12 Oct 2025',
-      pestName: 'Brown Plant Hopper',
-      status: 'resolved',
-      image: 'hopper',
-    },
-    {
-      id: '2',
-      date: '8 Oct 2025',
-      pestName: 'Rice Bug',
-      status: 'monitoring',
-      image: 'bug',
-    },
-    {
-      id: '3',
-      date: '3 Oct 2025',
-      pestName: 'Stem Borer',
-      status: 'resolved',
-      image: 'borer',
-    },
-    {
-      id: '4',
-      date: '28 Sep 2025',
-      pestName: 'Leaf Folder',
-      status: 'resolved',
-      image: 'folder',
-    },
-  ];
+  const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+
+  useEffect(() => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    fetch(`${apiBase}/farmer/scans`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load history');
+        return res.json();
+      })
+      .then((data) => {
+        const items = (data.items || []).map((item: any) => ({
+          id: String(item.id),
+          date: item.date,
+          pestName: item.pest_name,
+          status: item.status === 'deleted' ? 'pending' : item.status,
+          image: item.image_url || 'scan',
+        }));
+        setHistoryData(items);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load history'))
+      .finally(() => setLoading(false));
+  }, []);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -119,13 +120,15 @@ export function HistoryScreen({ onBack, onSelectPest }: HistoryScreenProps) {
         <h3 className="text-lg font-bold mb-4" style={{ color: '#333' }}>
           Recent Activity
         </h3>
+        {loading && <p className="text-sm text-gray-600">Loading...</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="space-y-3">
           {historyData.map((item) => {
             const statusInfo = getStatusText(item.status);
             return (
               <button
                 key={item.id}
-                onClick={() => onSelectPest()}
+                onClick={() => onSelectPest(Number(item.id))}
                 className="w-full bg-white rounded-xl p-4 shadow-md flex items-center gap-4 transition-transform active:scale-98"
               >
                 {/* Date Badge */}
