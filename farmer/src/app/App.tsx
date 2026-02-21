@@ -12,8 +12,17 @@ export default function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
   const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [farmerName, setFarmerName] = useState('');
-  const [capturedPest, setCapturedPest] = useState<string>('');
+  const [scanResult, setScanResult] = useState<null | {
+    name: string;
+    scientificName?: string | null;
+    confidence: number;
+    traditional: string[];
+    chemical: string[];
+    imageUrl?: string | null;
+  }>(null);
   const [fromResult, setFromResult] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState('');
 
   const handleLogin = (name: string) => {
     setFarmerName(name);
@@ -25,9 +34,36 @@ export default function App() {
     setFromResult(false);
   };
 
-  const handleCapture = (pestType: string) => {
-    setCapturedPest(pestType);
-    setCurrentScreen('result');
+  const handleCapture = async (file: File) => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setScanning(true);
+    setScanError('');
+    try {
+      const form = new FormData();
+      form.append('image', file);
+      const res = await fetch(`${apiBase}/farmer/scan`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!res.ok) throw new Error('Failed to analyze image');
+      const data = await res.json();
+      const pest = data.pest;
+      setScanResult({
+        name: pest.name,
+        scientificName: pest.scientific_name,
+        confidence: pest.confidence,
+        traditional: pest.traditional_methods || [],
+        chemical: pest.chemical_methods || [],
+        imageUrl: pest.image_url,
+      });
+      setCurrentScreen('result');
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : 'Scan failed');
+    } finally {
+      setScanning(false);
+    }
   };
 
   const handleAskExpert = () => {
@@ -39,8 +75,7 @@ export default function App() {
     setCurrentScreen('home');
   };
 
-  const handleSelectPestFromHistory = (pestType: string) => {
-    setCapturedPest(pestType);
+  const handleSelectPestFromHistory = () => {
     setCurrentScreen('result');
   };
 
@@ -76,12 +111,12 @@ export default function App() {
       )}
 
       {currentScreen === 'camera' && (
-        <CameraScreen onBack={handleBackToHome} onCapture={handleCapture} />
+        <CameraScreen onBack={handleBackToHome} onCapture={handleCapture} loading={scanning} error={scanError} />
       )}
 
       {currentScreen === 'result' && (
         <ResultScreen
-          pestType={capturedPest}
+          result={scanResult}
           onBack={handleBackToHome}
           onAskExpert={handleAskExpert}
         />

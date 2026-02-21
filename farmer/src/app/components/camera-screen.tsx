@@ -2,18 +2,15 @@ import { Camera, Image as ImageIcon, ArrowLeft, Info } from 'lucide-react';
 
 interface CameraScreenProps {
   onBack: () => void;
-  onCapture: (image: string) => void;
+  onCapture: (file: File) => void;
+  loading?: boolean;
+  error?: string;
 }
 
-export function CameraScreen({ onBack, onCapture }: CameraScreenProps) {
-  const handleTakePhoto = () => {
-    // Mock image capture - in real app would use device camera
-    onCapture('brown-plant-hopper');
-  };
-
-  const handleUpload = () => {
-    // Mock file upload - in real app would open file picker
-    onCapture('rice-bug');
+export function CameraScreen({ onBack, onCapture, loading = false, error }: CameraScreenProps) {
+  const handleFileChange = (file?: File | null) => {
+    if (!file) return;
+    onCapture(file);
   };
 
   return (
@@ -71,25 +68,48 @@ export function CameraScreen({ onBack, onCapture }: CameraScreenProps) {
       {/* Control Buttons */}
       <div className="px-6 pb-8 pt-12">
         <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-          <button
-            onClick={handleTakePhoto}
-            className="flex flex-col items-center justify-center gap-3 py-6 rounded-xl transition-transform active:scale-95"
+          <label
+            className="flex flex-col items-center justify-center gap-3 py-6 rounded-xl transition-transform active:scale-95 cursor-pointer"
             style={{ backgroundColor: '#4CAF50' }}
           >
             <Camera className="w-10 h-10 text-white" />
-            <span className="text-white text-lg font-semibold">Take Photo</span>
-          </button>
+            <span className="text-white text-lg font-semibold">
+              {loading ? 'Scanning...' : 'Take Photo'}
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => handleFileChange(e.target.files?.[0])}
+              disabled={loading}
+            />
+          </label>
 
-          <button
-            onClick={handleUpload}
-            className="flex flex-col items-center justify-center gap-3 py-6 rounded-xl transition-transform active:scale-95"
+          <label
+            className="flex flex-col items-center justify-center gap-3 py-6 rounded-xl transition-transform active:scale-95 cursor-pointer"
             style={{ backgroundColor: '#795548' }}
           >
             <ImageIcon className="w-10 h-10 text-white" />
-            <span className="text-white text-lg font-semibold">Upload</span>
-          </button>
+            <span className="text-white text-lg font-semibold">
+              {loading ? 'Scanning...' : 'Upload'}
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFileChange(e.target.files?.[0])}
+              disabled={loading}
+            />
+          </label>
         </div>
       </div>
+
+      {error && (
+        <div className="px-6 pb-6">
+          <p className="text-sm text-red-400 text-center">{error}</p>
+        </div>
+      )}
     </div>
   );
 }

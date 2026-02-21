@@ -2,7 +2,7 @@ import { ArrowLeft, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 interface HistoryScreenProps {
   onBack: () => void;
-  onSelectPest: (pestType: string) => void;
+  onSelectPest: () => void;
 }
 
 interface HistoryItem {
@@ -125,7 +125,7 @@ export function HistoryScreen({ onBack, onSelectPest }: HistoryScreenProps) {
             return (
               <button
                 key={item.id}
-                onClick={() => onSelectPest(item.image)}
+                onClick={() => onSelectPest()}
                 className="w-full bg-white rounded-xl p-4 shadow-md flex items-center gap-4 transition-transform active:scale-98"
               >
                 {/* Date Badge */}
