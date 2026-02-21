@@ -28,7 +28,7 @@ class UserService:
             region=payload.region,
             officer_id=payload.officer_id,
             hashed_password=get_password_hash(payload.password),
-            is_active=True,
+            status="active",
         )
         return create_user(db, user)
 

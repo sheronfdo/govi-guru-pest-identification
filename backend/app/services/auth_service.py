@@ -41,20 +41,23 @@ class AuthService:
             full_name=full_name,
             region=region,
             role="farmer",
+            status="active",
         )
         return create_user(db, user)
 
     @staticmethod
     def request_officer_access(db: Session, full_name: str, officer_id: str, region: str, phone: str, password: str) -> User:
         # In production, this should create a pending approval record.
+        domain = settings.system_email_domain
         user = User(
-            email=f"officer_{officer_id}@goviguru.local",
+            email=f"officer_{officer_id}@{domain}",
             phone=phone,
             hashed_password=get_password_hash(password),
             full_name=full_name,
             region=region,
             officer_id=officer_id,
             role="officer",
+            status="active",
         )
         return create_user(db, user)
 
@@ -71,5 +74,6 @@ class AuthService:
             role="admin",
             region=None,
             officer_id=None,
+            status="active",
         )
         return create_user(db, admin)

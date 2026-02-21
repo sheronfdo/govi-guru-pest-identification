@@ -15,4 +15,5 @@ class Pest(Base):
     chemical_methods = Column(Text, nullable=True)
     kem_methods = Column(Text, nullable=True)
     image_path = Column(String(512), nullable=True)
+    status = Column(String(32), default="active")
     created_at = Column(DateTime(timezone=True), server_default=func.now())

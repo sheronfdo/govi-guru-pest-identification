@@ -37,6 +37,7 @@ def list_users(
         query = query.filter(
             or_(User.email.ilike(like), User.full_name.ilike(like), User.phone.ilike(like))
         )
+    query = query.filter(User.status == "active")
     total = query.count()
     items = (
         query.order_by(User.id.desc())
@@ -59,5 +60,5 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
 
 
 def delete_user(db: Session, user: User) -> None:
-    db.delete(user)
+    user.status = "deleted"
     db.commit()

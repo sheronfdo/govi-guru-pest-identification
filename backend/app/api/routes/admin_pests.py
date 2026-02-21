@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, s
 from sqlalchemy.orm import Session
 
 from app.core.deps import require_role
-from app.core.storage import save_upload_file
+from app.core.storage import upload_image, get_object_url
 from app.db.session import get_db
 from app.models.pest import Pest
 from app.schemas.common import PaginatedResponse
@@ -38,7 +38,8 @@ async def create_pest(
     image_path = None
     if image is not None:
         content = await image.read()
-        image_path = save_upload_file(image.filename, content)
+        object_name = upload_image(image.filename, content, image.content_type)
+        image_path = get_object_url(object_name)
 
     pest = Pest(
         name_en=name_en,

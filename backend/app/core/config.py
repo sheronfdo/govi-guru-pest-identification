@@ -25,6 +25,13 @@ class Settings(BaseSettings):
     mysql_password: str = "goviguru"
     mysql_db: str = "goviguru"
 
+    # MinIO
+    minio_endpoint: str = "localhost:9000"
+    minio_access_key: str = "goviguru"
+    minio_secret_key: str = "goviguru123"
+    minio_bucket: str = "govi-guru"
+    minio_secure: bool = False
+
     @property
     def sqlalchemy_database_uri(self) -> str:
         return (

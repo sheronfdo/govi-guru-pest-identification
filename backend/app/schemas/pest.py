@@ -22,6 +22,7 @@ class PestOut(BaseModel):
     chemical_methods: Optional[str] = None
     kem_methods: Optional[str] = None
     image_path: Optional[str] = None
+    status: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:

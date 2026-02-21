@@ -14,6 +14,7 @@ def list_pests(
     if q:
         like = f"%{q}%"
         query = query.filter(Pest.name_en.ilike(like))
+    query = query.filter(Pest.status == "active")
     total = query.count()
     items = (
         query.order_by(Pest.id.desc())
@@ -36,5 +37,5 @@ def create_pest(db: Session, pest: Pest) -> Pest:
 
 
 def delete_pest(db: Session, pest: Pest) -> None:
-    db.delete(pest)
+    pest.status = "deleted"
     db.commit()

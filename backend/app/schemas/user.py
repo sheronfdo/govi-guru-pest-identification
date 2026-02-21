@@ -23,12 +23,12 @@ class UserUpdate(BaseModel):
     officer_id: Optional[str] = None
     phone: Optional[str] = None
     password: Optional[str] = None
-    is_active: Optional[bool] = None
+    status: Optional[str] = None
 
 
 class UserOut(UserBase):
     id: int
-    is_active: bool
+    status: str
 
     class Config:
         from_attributes = True

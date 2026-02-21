@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String
 from app.db.base import Base
 
 
@@ -13,4 +13,4 @@ class User(Base):
     role = Column(String(32), nullable=False)  # admin | officer | farmer
     region = Column(String(128), nullable=True)
     officer_id = Column(String(64), nullable=True)
-    is_active = Column(Boolean, default=True)
+    status = Column(String(32), default="active")

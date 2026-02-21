@@ -70,7 +70,7 @@ export function PestDatabase() {
         name: p.name_en,
         sinhalaName: p.name_si,
         tamilName: p.name_ta,
-        image: p.image_path ? `${import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '')}${p.image_path}` : null,
+        image: p.image_path || null,
         cropStage: p.crop_stage,
         chemical: p.chemical_methods,
         kem: p.kem_methods,
