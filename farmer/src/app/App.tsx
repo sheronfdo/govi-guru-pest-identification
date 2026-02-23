@@ -55,6 +55,12 @@ export default function App() {
           }
         };
         xhr.onload = () => {
+          if (xhr.status === 401) {
+            localStorage.removeItem('gg_token');
+            window.location.href = '/';
+            reject(new Error('Unauthorized'));
+            return;
+          }
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve(JSON.parse(xhr.responseText));
           } else {
