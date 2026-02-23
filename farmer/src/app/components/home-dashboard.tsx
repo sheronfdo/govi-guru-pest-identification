@@ -77,6 +77,7 @@ export function HomeDashboard({ farmerName, onNavigate, activeTab }: HomeDashboa
           </button>
 
           <button
+            onClick={() => onNavigate('profile')}
             className="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center gap-3 transition-transform active:scale-95"
             style={{ border: '2px solid #e0e0e0' }}
           >
@@ -132,6 +133,7 @@ export function HomeDashboard({ farmerName, onNavigate, activeTab }: HomeDashboa
 
           <button
             className="flex flex-col items-center gap-1 py-2 px-6"
+            onClick={() => onNavigate('profile')}
           >
             <User className="w-7 h-7" style={{ color: '#999' }} />
             <span className="text-xs font-semibold" style={{ color: '#999' }}>

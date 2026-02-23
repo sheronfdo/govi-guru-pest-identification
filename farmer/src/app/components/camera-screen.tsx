@@ -1,4 +1,5 @@
-import { Camera, Image as ImageIcon, ArrowLeft, Info } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Camera, Image as ImageIcon, ArrowLeft, Info, X } from 'lucide-react';
 
 interface CameraScreenProps {
   onBack: () => void;
@@ -9,9 +10,99 @@ interface CameraScreenProps {
 }
 
 export function CameraScreen({ onBack, onCapture, loading = false, error, progress = 0 }: CameraScreenProps) {
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fallbackCameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+
   const handleFileChange = (file?: File | null) => {
     if (!file) return;
-    onCapture(file);
+    setPreviewFile(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+  };
+
+  const stopStream = (stream?: MediaStream | null) => {
+    stream?.getTracks().forEach((track) => track.stop());
+  };
+
+  const startCamera = async () => {
+    if (loading) return;
+    setCameraError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setShowCamera(true);
+    } catch (err) {
+      setCameraError('Camera not available. Opening file picker instead.');
+      fallbackCameraInputRef.current?.click();
+    }
+  };
+
+  const closeCamera = () => {
+    if (videoRef.current?.srcObject) {
+      stopStream(videoRef.current.srcObject as MediaStream);
+      videoRef.current.srcObject = null;
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    const width = video.videoWidth || 1024;
+    const height = video.videoHeight || 1024;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, width, height);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `scan-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      closeCamera();
+      setPreviewFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }, 'image/jpeg', 0.9);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (videoRef.current?.srcObject) {
+        stopStream(videoRef.current.srcObject as MediaStream);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const clearPreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewFile(null);
+  };
+
+  const confirmPreview = () => {
+    if (!previewFile) return;
+    onCapture(previewFile);
   };
 
   return (
@@ -69,23 +160,18 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
       {/* Control Buttons */}
       <div className="px-6 pb-8 pt-12">
         <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-          <label
-            className="flex flex-col items-center justify-center gap-3 py-6 rounded-xl transition-transform active:scale-95 cursor-pointer"
+          <button
+            type="button"
+            onClick={startCamera}
+            className="flex flex-col items-center justify-center gap-3 py-6 rounded-xl transition-transform active:scale-95"
             style={{ backgroundColor: '#4CAF50' }}
+            disabled={loading}
           >
             <Camera className="w-10 h-10 text-white" />
             <span className="text-white text-lg font-semibold">
               {loading ? 'Scanning...' : 'Take Photo'}
             </span>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => handleFileChange(e.target.files?.[0])}
-              disabled={loading}
-            />
-          </label>
+          </button>
 
           <label
             className="flex flex-col items-center justify-center gap-3 py-6 rounded-xl transition-transform active:scale-95 cursor-pointer"
@@ -101,6 +187,7 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
               className="hidden"
               onChange={(e) => handleFileChange(e.target.files?.[0])}
               disabled={loading}
+              ref={galleryInputRef}
             />
           </label>
         </div>
@@ -118,6 +205,101 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
       {error && (
         <div className="px-6 pb-6">
           <p className="text-sm text-red-400 text-center">{error}</p>
+        </div>
+      )}
+
+      {cameraError && (
+        <div className="px-6 pb-6">
+          <p className="text-sm text-red-400 text-center">{cameraError}</p>
+        </div>
+      )}
+
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => handleFileChange(e.target.files?.[0])}
+        ref={fallbackCameraInputRef}
+      />
+
+      {showCamera && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <div className="flex items-center justify-between px-4 py-4">
+            <button
+              onClick={closeCamera}
+              className="p-2 rounded-lg"
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+            <h3 className="text-white font-semibold">Camera</h3>
+            <div className="w-10" />
+          </div>
+          <div className="flex-1 flex items-center justify-center px-4">
+            <video
+              ref={videoRef}
+              className="w-full max-w-md rounded-2xl border-2"
+              style={{ borderColor: '#4CAF50' }}
+              playsInline
+              muted
+            />
+          </div>
+          <div className="px-6 pb-10 pt-6">
+            <button
+              onClick={capturePhoto}
+              className="w-full py-4 rounded-xl text-lg font-bold text-white"
+              style={{ backgroundColor: '#4CAF50' }}
+            >
+              Capture
+            </button>
+          </div>
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+      )}
+
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
+          <div className="flex items-center justify-between px-4 py-4">
+            <button
+              onClick={clearPreview}
+              className="p-2 rounded-lg"
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+            <h3 className="text-white font-semibold">Preview</h3>
+            <div className="w-10" />
+          </div>
+          <div className="flex-1 flex items-center justify-center px-6">
+            <img
+              src={previewUrl}
+              alt="Scan preview"
+              className="w-full max-w-md rounded-2xl border-2 object-contain"
+              style={{ borderColor: '#4CAF50', maxHeight: '70vh' }}
+            />
+          </div>
+          <div className="px-6 pb-10 pt-6 space-y-3">
+            <button
+              onClick={confirmPreview}
+              className="w-full py-4 rounded-xl text-lg font-bold text-white"
+              style={{ backgroundColor: '#4CAF50' }}
+              disabled={loading}
+            >
+              {loading ? 'Scanning...' : 'Use This Photo'}
+            </button>
+            <button
+              onClick={() => {
+                clearPreview();
+                galleryInputRef.current?.click();
+              }}
+              className="w-full py-3 rounded-xl text-sm font-semibold"
+              style={{ backgroundColor: '#795548', color: 'white' }}
+              disabled={loading}
+            >
+              Choose Another
+            </button>
+          </div>
         </div>
       )}
     </div>

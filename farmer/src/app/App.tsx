@@ -8,6 +8,7 @@ import { ConsultationListScreen } from './components/consultation-list-screen';
 import { ConsultationDetailScreen } from './components/consultation-detail-screen';
 import { HistoryScreen } from './components/history-screen';
 import { ScanDetailScreen } from './components/scan-detail-screen';
+import { ProfileScreen } from './components/profile-screen';
 
 type Screen =
   | 'login'
@@ -18,7 +19,8 @@ type Screen =
   | 'history'
   | 'scan-detail'
   | 'consultations'
-  | 'consultation-detail';
+  | 'consultation-detail'
+  | 'profile';
 
 export default function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -120,6 +122,12 @@ export default function App() {
     setCurrentScreen('home');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('gg_token');
+    setFarmerName('');
+    setCurrentScreen('login');
+  };
+
   const handleSelectPestFromHistory = (scanId: number) => {
     setSelectedScanId(scanId);
     setCurrentScreen('scan-detail');
@@ -213,6 +221,10 @@ export default function App() {
           consultationId={selectedConsultationId}
           onBack={() => setCurrentScreen('consultations')}
         />
+      )}
+
+      {currentScreen === 'profile' && (
+        <ProfileScreen onBack={handleBackToHome} onLogout={handleLogout} />
       )}
     </div>
   );
