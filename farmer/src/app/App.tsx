@@ -192,6 +192,16 @@ export default function App() {
           onBack={handleBackToHome}
           scanId={fromResult ? scanMeta.id : null}
           scanImageUrl={fromResult ? scanMeta.imageUrl : null}
+          scanContext={
+            fromResult && scanResult
+              ? {
+                  name: scanResult.name,
+                  confidence: scanResult.confidence,
+                  cropStage: scanResult.cropStage || null,
+                  scientificName: scanResult.scientificName || null,
+                }
+              : null
+          }
           onSubmitted={() => setCurrentScreen('consultations')}
           onViewConsultations={() => setCurrentScreen('consultations')}
         />

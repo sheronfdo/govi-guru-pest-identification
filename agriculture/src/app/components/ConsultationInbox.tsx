@@ -129,6 +129,20 @@ export default function ConsultationInbox() {
 
   const selectedConv = conversations.find((c) => c.id === selectedConversation);
   const messages = selectedDetail?.messages || [];
+  const statusMeta = (status?: string) => {
+    switch (status) {
+      case 'replied':
+        return { label: 'Replied', badge: 'bg-[#4CAF50]', icon: 'check' as const };
+      case 'verified':
+        return { label: 'Verified', badge: 'bg-emerald-600', icon: 'check' as const };
+      case 'corrected':
+        return { label: 'Corrected', badge: 'bg-orange-500', icon: 'check' as const };
+      case 'closed':
+        return { label: 'Closed', badge: 'bg-gray-500', icon: 'check' as const };
+      default:
+        return { label: 'Unanswered', badge: 'bg-orange-500', icon: 'none' as const };
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -162,6 +176,7 @@ export default function ConsultationInbox() {
               )}
               {filteredConversations.map((conv) => {
                 const unread = conv.last_message_sender_role === 'farmer' ? 1 : 0;
+                const meta = statusMeta(conv.status);
                 return (
                   <button
                     key={conv.id}
@@ -177,7 +192,7 @@ export default function ConsultationInbox() {
                       {unread > 0 && (
                         <Badge className="bg-red-500">{unread}</Badge>
                       )}
-                      {conv.status === 'replied' && (
+                      {meta.icon === 'check' && (
                         <CheckCheck className="size-4 text-[#4CAF50]" />
                       )}
                     </div>
@@ -206,22 +221,14 @@ export default function ConsultationInbox() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>{selectedConv.farmer_name || 'Unknown Farmer'}</CardTitle>
-                    <Badge
-                      variant={selectedConv.status === 'replied' ? 'secondary' : 'default'}
-                      className={`mt-2 ${
-                        selectedConv.status === 'replied'
-                          ? 'bg-[#4CAF50]'
-                          : selectedConv.status === 'closed'
-                          ? 'bg-gray-500'
-                          : 'bg-orange-500'
-                      }`}
-                    >
-                      {selectedConv.status === 'replied'
-                        ? 'Replied'
-                        : selectedConv.status === 'closed'
-                        ? 'Closed'
-                        : 'Unanswered'}
-                    </Badge>
+                    {(() => {
+                      const meta = statusMeta(selectedConv.status);
+                      return (
+                        <Badge variant="secondary" className={`mt-2 ${meta.badge}`}>
+                          {meta.label}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   {/* Pinned Image */}
                   <div className="text-right">

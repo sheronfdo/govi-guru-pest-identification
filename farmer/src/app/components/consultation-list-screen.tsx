@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, MessageCircle, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, MessageCircle, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
 interface ConsultationListScreenProps {
   onBack: () => void;
@@ -51,6 +51,10 @@ export function ConsultationListScreen({ onBack, onSelect, onNew }: Consultation
     switch (status) {
       case 'replied':
         return { text: 'Replied', color: '#4CAF50', icon: CheckCircle };
+      case 'verified':
+        return { text: 'Verified', color: '#2E7D32', icon: CheckCircle };
+      case 'corrected':
+        return { text: 'Corrected', color: '#F57C00', icon: AlertTriangle };
       case 'closed':
         return { text: 'Closed', color: '#607D8B', icon: CheckCircle };
       default:

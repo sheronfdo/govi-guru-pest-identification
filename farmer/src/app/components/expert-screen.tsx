@@ -5,6 +5,12 @@ interface ExpertScreenProps {
   onBack: () => void;
   scanId?: number | null;
   scanImageUrl?: string | null;
+  scanContext?: {
+    name: string;
+    confidence: number;
+    cropStage?: string | null;
+    scientificName?: string | null;
+  } | null;
   onSubmitted?: () => void;
   onViewConsultations?: () => void;
 }
@@ -13,6 +19,7 @@ export function ExpertScreen({
   onBack,
   scanId = null,
   scanImageUrl = null,
+  scanContext = null,
   onSubmitted,
   onViewConsultations,
 }: ExpertScreenProps) {
@@ -24,6 +31,16 @@ export function ExpertScreen({
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!scanContext) return;
+    if (message.trim().length > 0) return;
+    const confidencePct = Math.round(scanContext.confidence * 100);
+    const cropStage = scanContext.cropStage ? ` (Crop stage: ${scanContext.cropStage})` : '';
+    setMessage(
+      `The scan identified ${scanContext.name} at ${confidencePct}% confidence${cropStage}, but I think this is incorrect. Please review and advise.`
+    );
+  }, [scanContext, message]);
 
   useEffect(() => {
     if (!attachmentFile) {
@@ -136,6 +153,22 @@ export function ExpertScreen({
               <p className="text-sm" style={{ color: '#666' }}>
                 From recent scan
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {scanContext && (
+        <div className="px-6 mb-4">
+          <div className="bg-white rounded-xl p-4 shadow-md">
+            <p className="text-xs font-semibold" style={{ color: '#999' }}>AI Detection</p>
+            <p className="text-base font-bold" style={{ color: '#333' }}>{scanContext.name}</p>
+            {scanContext.scientificName && (
+              <p className="text-sm italic" style={{ color: '#666' }}>{scanContext.scientificName}</p>
+            )}
+            <div className="mt-2 flex items-center gap-3 text-xs" style={{ color: '#666' }}>
+              <span>Confidence: {Math.round(scanContext.confidence * 100)}%</span>
+              {scanContext.cropStage && <span>Crop stage: {scanContext.cropStage}</span>}
             </div>
           </div>
         </div>

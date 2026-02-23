@@ -18,6 +18,9 @@ interface ConsultationDetail {
   id: number;
   status: string;
   scan_image_url?: string | null;
+  scan_pest_name?: string | null;
+  scan_confidence?: number | null;
+  scan_crop_stage?: string | null;
   created_at: string;
   messages: ConsultationMessage[];
 }
@@ -133,6 +136,13 @@ export function ConsultationDetailScreen({ consultationId, onBack }: Consultatio
                 <div>
                   <p className="text-sm text-gray-500">Opened: {data.created_at}</p>
                   <p className="text-xs text-gray-400">Status: {data.status}</p>
+                  {data.scan_pest_name && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      AI: {data.scan_pest_name}
+                      {typeof data.scan_confidence === 'number' ? ` (${Math.round(data.scan_confidence * 100)}%)` : ''}
+                      {data.scan_crop_stage ? ` • ${data.scan_crop_stage}` : ''}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
