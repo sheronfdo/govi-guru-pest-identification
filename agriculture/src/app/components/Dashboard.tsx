@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { AlertCircle, MessageCircle, Bug, Clock } from 'lucide-react';
 import { Link } from 'react-router';
+import { toast } from 'sonner';
 
 interface DashboardProps {
   officerData: {
@@ -11,10 +13,39 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ officerData }: DashboardProps) {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState({
+    pending_verifications: 0,
+    farmer_queries: 0,
+    active_pest_alerts: 0,
+    total_farmers: 0,
+    verification_rate: 0,
+    scans_this_week: 0,
+    avg_response_hours: 0,
+    recent_activity: [] as Array<{ farmer_name: string; action: string; time: string; status: string }>,
+  });
+
+  useEffect(() => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoading(true);
+    fetch(`${apiBase}/officer/dashboard`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load dashboard');
+        return res.json();
+      })
+      .then((payload) => setData(payload))
+      .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to load dashboard'))
+      .finally(() => setLoading(false));
+  }, []);
+
   const summaryData = [
     {
       title: 'Pending Verifications',
-      count: 12,
+      count: data.pending_verifications,
       icon: AlertCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
@@ -22,7 +53,7 @@ export default function Dashboard({ officerData }: DashboardProps) {
     },
     {
       title: 'Farmer Queries',
-      count: 8,
+      count: data.farmer_queries,
       icon: MessageCircle,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
@@ -30,44 +61,11 @@ export default function Dashboard({ officerData }: DashboardProps) {
     },
     {
       title: 'Active Pest Alerts',
-      count: 5,
+      count: data.active_pest_alerts,
       icon: Bug,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
       link: '/verification'
-    },
-  ];
-
-  const recentActivity = [
-    {
-      farmer: 'Sunil Perera',
-      action: 'reported Brown Planthopper',
-      time: '10 mins ago',
-      status: 'pending'
-    },
-    {
-      farmer: 'Nimal Silva',
-      action: 'verified Rice Blast diagnosis',
-      time: '25 mins ago',
-      status: 'completed'
-    },
-    {
-      farmer: 'Kamala Jayawardena',
-      action: 'requested consultation for leaf damage',
-      time: '1 hour ago',
-      status: 'pending'
-    },
-    {
-      farmer: 'Ranjan Fernando',
-      action: 'uploaded new pest photos',
-      time: '2 hours ago',
-      status: 'pending'
-    },
-    {
-      farmer: 'Priyanka Wijesinghe',
-      action: 'completed treatment for Fall Armyworm',
-      time: '3 hours ago',
-      status: 'completed'
     },
   ];
 
@@ -127,14 +125,20 @@ export default function Dashboard({ officerData }: DashboardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentActivity.map((activity, index) => (
+            {loading && (
+              <p className="text-sm text-gray-500">Loading activity...</p>
+            )}
+            {!loading && data.recent_activity.length === 0 && (
+              <p className="text-sm text-gray-500">No recent activity.</p>
+            )}
+            {!loading && data.recent_activity.map((activity, index) => (
               <div
                 key={index}
                 className="flex items-start justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div className="flex-1">
                   <p className="text-sm">
-                    <span>{activity.farmer}</span>{' '}
+                    <span>{activity.farmer_name}</span>{' '}
                     <span className="text-[#455A64]">{activity.action}</span>
                   </p>
                   <p className="text-xs text-[#455A64] mt-1">{activity.time}</p>
@@ -159,25 +163,25 @@ export default function Dashboard({ officerData }: DashboardProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-2xl">127</p>
+            <p className="text-2xl">{data.total_farmers}</p>
             <p className="text-sm text-[#455A64] mt-1">Total Farmers</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-2xl">95%</p>
+            <p className="text-2xl">{data.verification_rate}%</p>
             <p className="text-sm text-[#455A64] mt-1">Verification Rate</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-2xl">48</p>
+            <p className="text-2xl">{data.scans_this_week}</p>
             <p className="text-sm text-[#455A64] mt-1">This Week</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-2xl">2.3h</p>
+            <p className="text-2xl">{data.avg_response_hours}h</p>
             <p className="text-sm text-[#455A64] mt-1">Avg Response</p>
           </CardContent>
         </Card>

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Search, MapPin, Calendar, AlertTriangle, CheckCircle, AlertCircle, Phone, Mail } from 'lucide-react';
+import { Search, MapPin, Calendar, AlertTriangle, CheckCircle, AlertCircle, Phone, Mail, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface FarmerDirectoryProps {
   officerData: {
@@ -12,115 +13,76 @@ interface FarmerDirectoryProps {
   };
 }
 
-const mockFarmers = [
-  {
-    id: 1,
-    name: 'Sunil Perera',
-    location: 'Kurunegala District',
-    phone: '+94 71 234 5678',
-    email: 'sunil.perera@mail.lk',
-    lastActive: '2 hours ago',
-    riskLevel: 'high',
-    recentReports: 3,
-    landSize: '2.5 acres',
-    cropType: 'Rice'
-  },
-  {
-    id: 2,
-    name: 'Kamala Jayawardena',
-    location: 'Anuradhapura District',
-    phone: '+94 77 345 6789',
-    email: 'kamala.j@mail.lk',
-    lastActive: '5 hours ago',
-    riskLevel: 'medium',
-    recentReports: 2,
-    landSize: '3.0 acres',
-    cropType: 'Paddy'
-  },
-  {
-    id: 3,
-    name: 'Nimal Silva',
-    location: 'Kurunegala District',
-    phone: '+94 76 456 7890',
-    email: 'nimal.silva@mail.lk',
-    lastActive: '1 day ago',
-    riskLevel: 'low',
-    recentReports: 0,
-    landSize: '1.8 acres',
-    cropType: 'Rice'
-  },
-  {
-    id: 4,
-    name: 'Ranjan Fernando',
-    location: 'Polonnaruwa District',
-    phone: '+94 71 567 8901',
-    email: 'ranjan.f@mail.lk',
-    lastActive: '3 hours ago',
-    riskLevel: 'high',
-    recentReports: 4,
-    landSize: '4.2 acres',
-    cropType: 'Rice, Vegetables'
-  },
-  {
-    id: 5,
-    name: 'Priyanka Wijesinghe',
-    location: 'Kurunegala District',
-    phone: '+94 77 678 9012',
-    email: 'priyanka.w@mail.lk',
-    lastActive: '2 days ago',
-    riskLevel: 'low',
-    recentReports: 1,
-    landSize: '2.0 acres',
-    cropType: 'Paddy'
-  },
-  {
-    id: 6,
-    name: 'Ajith Bandara',
-    location: 'Anuradhapura District',
-    phone: '+94 76 789 0123',
-    email: 'ajith.b@mail.lk',
-    lastActive: '6 hours ago',
-    riskLevel: 'medium',
-    recentReports: 2,
-    landSize: '3.5 acres',
-    cropType: 'Rice'
-  },
-  {
-    id: 7,
-    name: 'Malini Rathnayake',
-    location: 'Kurunegala District',
-    phone: '+94 71 890 1234',
-    email: 'malini.r@mail.lk',
-    lastActive: '1 hour ago',
-    riskLevel: 'high',
-    recentReports: 5,
-    landSize: '1.5 acres',
-    cropType: 'Vegetables'
-  },
-  {
-    id: 8,
-    name: 'Chandana Wickrama',
-    location: 'Polonnaruwa District',
-    phone: '+94 77 901 2345',
-    email: 'chandana.w@mail.lk',
-    lastActive: '4 days ago',
-    riskLevel: 'low',
-    recentReports: 0,
-    landSize: '2.8 acres',
-    cropType: 'Rice'
-  },
-];
+interface FarmerSummary {
+  id: number;
+  full_name?: string | null;
+  email: string;
+  phone?: string | null;
+  region?: string | null;
+  total_scans: number;
+  pending_consultations: number;
+  last_scan_at?: string | null;
+}
 
 export default function FarmerDirectory({ officerData }: FarmerDirectoryProps) {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRisk, setFilterRisk] = useState<string>('all');
+  const [farmers, setFarmers] = useState<FarmerSummary[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const filteredFarmers = mockFarmers.filter(farmer => {
-    const matchesSearch = farmer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         farmer.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRisk = filterRisk === 'all' || farmer.riskLevel === filterRisk;
+  const loadFarmers = async (query?: string) => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoading(true);
+    try {
+      const qs = query ? `?q=${encodeURIComponent(query)}` : '';
+      const res = await fetch(`${apiBase}/officer/farmers${qs}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load farmers');
+      const data = await res.json();
+      setFarmers(data.items || []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load farmers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFarmers();
+  }, []);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      loadFarmers(searchTerm.trim() || undefined);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  const getRiskLevel = (farmer: FarmerSummary) => {
+    if (farmer.pending_consultations >= 2 || farmer.total_scans >= 5) return 'high';
+    if (farmer.pending_consultations >= 1 || farmer.total_scans >= 2) return 'medium';
+    return 'low';
+  };
+
+  const filteredFarmers = useMemo(() => {
+    return farmers.filter((farmer) => {
+      const name = farmer.full_name || 'Farmer';
+      const region = farmer.region || '';
+      const email = farmer.email || '';
+      const phone = farmer.phone || '';
+      const matchesSearch =
+        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        region.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        phone.toLowerCase().includes(searchTerm.toLowerCase());
+      const riskLevel = getRiskLevel(farmer);
+      const matchesRisk = filterRisk === 'all' || riskLevel === filterRisk;
     return matchesSearch && matchesRisk;
-  });
+    });
+  }, [farmers, searchTerm, filterRisk]);
 
   const getRiskBadge = (level: string) => {
     switch (level) {
@@ -135,12 +97,13 @@ export default function FarmerDirectory({ officerData }: FarmerDirectoryProps) {
     }
   };
 
-  const stats = {
-    total: mockFarmers.length,
-    highRisk: mockFarmers.filter(f => f.riskLevel === 'high').length,
-    mediumRisk: mockFarmers.filter(f => f.riskLevel === 'medium').length,
-    lowRisk: mockFarmers.filter(f => f.riskLevel === 'low').length,
-  };
+  const stats = useMemo(() => {
+    const total = farmers.length;
+    const highRisk = farmers.filter((f) => getRiskLevel(f) === 'high').length;
+    const mediumRisk = farmers.filter((f) => getRiskLevel(f) === 'medium').length;
+    const lowRisk = farmers.filter((f) => getRiskLevel(f) === 'low').length;
+    return { total, highRisk, mediumRisk, lowRisk };
+  }, [farmers]);
 
   return (
     <div className="space-y-6">
@@ -237,35 +200,35 @@ export default function FarmerDirectory({ officerData }: FarmerDirectoryProps) {
                 <TableHead>Farmer Name</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Contact</TableHead>
-                <TableHead>Land & Crop</TableHead>
-                <TableHead>Last Active</TableHead>
-                <TableHead>Recent Reports</TableHead>
+                <TableHead>Activity</TableHead>
+                <TableHead>Consultations</TableHead>
                 <TableHead>Risk Level</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredFarmers.map((farmer) => {
-                const risk = getRiskBadge(farmer.riskLevel);
+                const riskLevel = getRiskLevel(farmer);
+                const risk = getRiskBadge(riskLevel);
                 const RiskIcon = risk.icon;
                 return (
                   <TableRow key={farmer.id} className="cursor-pointer hover:bg-gray-50">
                     <TableCell>
                       <div>
-                        <p>{farmer.name}</p>
+                        <p>{farmer.full_name || 'Farmer'}</p>
                         <p className="text-xs text-[#455A64]">ID: F{farmer.id.toString().padStart(4, '0')}</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <MapPin className="size-4 text-[#455A64]" />
-                        <span className="text-sm">{farmer.location}</span>
+                        <span className="text-sm">{farmer.region || 'Unknown'}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-sm">
                           <Phone className="size-3 text-[#455A64]" />
-                          {farmer.phone}
+                          {farmer.phone || '—'}
                         </div>
                         <div className="flex items-center gap-2 text-sm">
                           <Mail className="size-3 text-[#455A64]" />
@@ -275,20 +238,17 @@ export default function FarmerDirectory({ officerData }: FarmerDirectoryProps) {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="text-sm">{farmer.landSize}</p>
-                        <p className="text-xs text-[#455A64]">{farmer.cropType}</p>
+                        <p className="text-sm">Scans: {farmer.total_scans}</p>
+                        <p className="text-xs text-[#455A64]">
+                          Last scan: {farmer.last_scan_at || 'Never'}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Calendar className="size-4 text-[#455A64]" />
-                        <span className="text-sm">{farmer.lastActive}</span>
+                        <FileText className="size-4 text-[#455A64]" />
+                        <span className="text-sm">{farmer.pending_consultations} pending</span>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={farmer.recentReports > 2 ? 'border-red-500 text-red-600' : ''}>
-                        {farmer.recentReports} reports
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge className={risk.color}>
@@ -307,14 +267,15 @@ export default function FarmerDirectory({ officerData }: FarmerDirectoryProps) {
       {/* Farmers Cards - Mobile */}
       <div className="lg:hidden space-y-4">
         {filteredFarmers.map((farmer) => {
-          const risk = getRiskBadge(farmer.riskLevel);
+          const riskLevel = getRiskLevel(farmer);
+          const risk = getRiskBadge(riskLevel);
           const RiskIcon = risk.icon;
           return (
             <Card key={farmer.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3>{farmer.name}</h3>
+                    <h3>{farmer.full_name || 'Farmer'}</h3>
                     <p className="text-xs text-[#455A64]">ID: F{farmer.id.toString().padStart(4, '0')}</p>
                   </div>
                   <Badge className={risk.color}>
@@ -326,24 +287,24 @@ export default function FarmerDirectory({ officerData }: FarmerDirectoryProps) {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <MapPin className="size-4 text-[#455A64]" />
-                    <span>{farmer.location}</span>
+                    <span>{farmer.region || 'Unknown'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="size-4 text-[#455A64]" />
-                    <span>{farmer.phone}</span>
+                    <span>{farmer.phone || '—'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="size-4 text-[#455A64]" />
-                    <span>Last active: {farmer.lastActive}</span>
+                    <span>Last scan: {farmer.last_scan_at || 'Never'}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t">
                   <div>
-                    <p className="text-sm">{farmer.landSize} • {farmer.cropType}</p>
+                    <p className="text-sm">Scans: {farmer.total_scans}</p>
                   </div>
-                  <Badge variant="outline" className={farmer.recentReports > 2 ? 'border-red-500 text-red-600' : ''}>
-                    {farmer.recentReports} reports
+                  <Badge variant="outline" className={farmer.pending_consultations > 0 ? 'border-red-500 text-red-600' : ''}>
+                    {farmer.pending_consultations} pending
                   </Badge>
                 </div>
               </CardContent>
@@ -352,10 +313,18 @@ export default function FarmerDirectory({ officerData }: FarmerDirectoryProps) {
         })}
       </div>
 
-      {filteredFarmers.length === 0 && (
+      {!loading && filteredFarmers.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center text-[#455A64]">
             No farmers found matching your search criteria.
+          </CardContent>
+        </Card>
+      )}
+
+      {loading && (
+        <Card>
+          <CardContent className="py-12 text-center text-[#455A64]">
+            Loading farmers...
           </CardContent>
         </Card>
       )}
