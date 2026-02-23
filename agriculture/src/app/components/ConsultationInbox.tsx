@@ -1,94 +1,134 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Send, Search, CheckCheck } from 'lucide-react';
+import { Send, Search, CheckCheck, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
-const mockConversations = [
-  {
-    id: 1,
-    farmer: 'Sunil Perera',
-    lastMessage: 'Thank you for the advice on the planthopper issue',
-    timestamp: '10:30 AM',
-    unread: 0,
-    status: 'replied',
-    image: 'https://images.unsplash.com/photo-1611633166749-4d35b1daa67d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicm93biUyMHBsYW50aG9wcGVyJTIwcGVzdHxlbnwxfHx8fDE3NzA1NjE4NTJ8MA&ixlib=rb-4.1.0&q=80&w=400'
-  },
-  {
-    id: 2,
-    farmer: 'Kamala Jayawardena',
-    lastMessage: 'Is it safe to use this pesticide with other crops nearby?',
-    timestamp: 'Yesterday',
-    unread: 2,
-    status: 'unanswered',
-    image: 'https://images.unsplash.com/photo-1758903178566-81b9026340ae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9wJTIwZGlzZWFzZSUyMGxlYWZ8ZW58MXx8fHwxNzcwNTYxODUyfDA&ixlib=rb-4.1.0&q=80&w=400'
-  },
-  {
-    id: 3,
-    farmer: 'Nimal Silva',
-    lastMessage: 'The treatment is working well, leaves are recovering',
-    timestamp: 'Yesterday',
-    unread: 0,
-    status: 'replied',
-    image: 'https://images.unsplash.com/photo-1709489016628-d173053e7eae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZ3JpY3VsdHVyZSUyMGZpZWxkJTIwY3JvcHN8ZW58MXx8fHwxNzcwNTYxODUxfDA&ixlib=rb-4.1.0&q=80&w=400'
-  },
-  {
-    id: 4,
-    farmer: 'Ranjan Fernando',
-    lastMessage: 'Should I continue the treatment for another week?',
-    timestamp: '2 days ago',
-    unread: 1,
-    status: 'unanswered',
-    image: 'https://images.unsplash.com/photo-1505216980056-a7b7b1c6e000?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwcGVzdCUyMGRhbWFnZXxlbnwxfHx8fDE3NzA1NjE4NTJ8MA&ixlib=rb-4.1.0&q=80&w=400'
-  },
-];
+interface ConsultationSummary {
+  id: number;
+  farmer_id: number;
+  farmer_name?: string | null;
+  status: string;
+  last_message?: string | null;
+  last_message_at?: string | null;
+  last_message_sender_role?: string | null;
+  scan_image_url?: string | null;
+}
 
-const mockMessages = {
-  1: [
-    { sender: 'farmer', text: 'I found these insects on my rice plants', time: '09:15 AM' },
-    { sender: 'farmer', text: 'The leaves are turning yellow', time: '09:15 AM' },
-    { sender: 'officer', text: 'I can see brown planthoppers in your photo. This is a common pest in rice crops.', time: '09:30 AM' },
-    { sender: 'officer', text: 'Use 5ml of Neem oil per liter of water. Spray twice daily for 7 days.', time: '09:30 AM' },
-    { sender: 'farmer', text: 'Thank you for the advice on the planthopper issue', time: '10:30 AM' },
-  ],
-  2: [
-    { sender: 'farmer', text: 'I have leaf spots appearing on my paddy', time: 'Yesterday 8:30 AM' },
-    { sender: 'officer', text: 'This appears to be leaf blight. You need to apply fungicide immediately.', time: 'Yesterday 9:00 AM' },
-    { sender: 'farmer', text: 'Is it safe to use this pesticide with other crops nearby?', time: 'Yesterday 2:15 PM' },
-  ],
-  3: [
-    { sender: 'farmer', text: 'Started the treatment you recommended', time: '2 days ago' },
-    { sender: 'officer', text: 'Good! Monitor the progress and let me know in a few days.', time: '2 days ago' },
-    { sender: 'farmer', text: 'The treatment is working well, leaves are recovering', time: 'Yesterday' },
-  ],
-  4: [
-    { sender: 'farmer', text: 'Following your advice for rice blast treatment', time: '5 days ago' },
-    { sender: 'officer', text: 'Continue for at least 7 days and monitor closely', time: '5 days ago' },
-    { sender: 'farmer', text: 'Should I continue the treatment for another week?', time: '2 days ago' },
-  ],
-};
+interface ConsultationMessage {
+  id: number;
+  sender_id: number;
+  sender_role: string;
+  sender_name?: string | null;
+  body: string;
+  attachment_url?: string | null;
+  created_at: string;
+}
+
+interface ConsultationDetail {
+  id: number;
+  status: string;
+  farmer: { id: number; name?: string | null };
+  officer?: { id: number; name?: string | null } | null;
+  scan_id?: number | null;
+  scan_image_url?: string | null;
+  created_at: string;
+  messages: ConsultationMessage[];
+}
 
 export default function ConsultationInbox() {
-  const [selectedConversation, setSelectedConversation] = useState<number | null>(1);
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [messageInput, setMessageInput] = useState('');
+  const [conversations, setConversations] = useState<ConsultationSummary[]>([]);
+  const [selectedDetail, setSelectedDetail] = useState<ConsultationDetail | null>(null);
+  const [loadingList, setLoadingList] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
-  const filteredConversations = mockConversations.filter(conv =>
-    conv.farmer.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredConversations = useMemo(() => {
+    return conversations.filter((conv) =>
+      (conv.farmer_name || 'Unknown').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [conversations, searchTerm]);
 
-  const handleSendMessage = () => {
-    if (messageInput.trim()) {
-      toast.success('Message sent successfully');
-      setMessageInput('');
+  const loadConversations = async () => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoadingList(true);
+    try {
+      const res = await fetch(`${apiBase}/officer/consultations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load consultations');
+      const data = await res.json();
+      setConversations(data.items || []);
+      if (!selectedConversation && data.items?.length) {
+        setSelectedConversation(data.items[0].id);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load consultations');
+    } finally {
+      setLoadingList(false);
     }
   };
 
-  const selectedConv = mockConversations.find(c => c.id === selectedConversation);
-  const messages = selectedConversation ? mockMessages[selectedConversation as keyof typeof mockMessages] : [];
+  const loadConversationDetail = async (consultationId: number) => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoadingDetail(true);
+    try {
+      const res = await fetch(`${apiBase}/officer/consultations/${consultationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load conversation');
+      const data = await res.json();
+      setSelectedDetail(data);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load conversation');
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  useEffect(() => {
+    if (selectedConversation) {
+      loadConversationDetail(selectedConversation);
+    }
+  }, [selectedConversation]);
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !selectedConversation) return;
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+
+    try {
+      const form = new FormData();
+      form.append('message', messageInput.trim());
+      const res = await fetch(`${apiBase}/officer/consultations/${selectedConversation}/messages`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!res.ok) throw new Error('Failed to send message');
+      setMessageInput('');
+      await loadConversationDetail(selectedConversation);
+      await loadConversations();
+      toast.success('Message sent successfully');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send message');
+    }
+  };
+
+  const selectedConv = conversations.find((c) => c.id === selectedConversation);
+  const messages = selectedDetail?.messages || [];
 
   return (
     <div className="space-y-6">
@@ -116,37 +156,44 @@ export default function ConsultationInbox() {
           </CardHeader>
           <ScrollArea className="h-[calc(100%-120px)]">
             <CardContent className="space-y-2">
-              {filteredConversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(conv.id)}
-                  className={`w-full text-left p-4 rounded-lg transition-colors ${
-                    selectedConversation === conv.id
-                      ? 'bg-[#1976D2] text-white'
-                      : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <p className="font-medium">{conv.farmer}</p>
-                    {conv.unread > 0 && (
-                      <Badge className="bg-red-500">{conv.unread}</Badge>
-                    )}
-                    {conv.status === 'replied' && (
-                      <CheckCheck className="size-4 text-[#4CAF50]" />
-                    )}
-                  </div>
-                  <p className={`text-sm line-clamp-1 ${
-                    selectedConversation === conv.id ? 'text-blue-100' : 'text-[#455A64]'
-                  }`}>
-                    {conv.lastMessage}
-                  </p>
-                  <p className={`text-xs mt-1 ${
-                    selectedConversation === conv.id ? 'text-blue-200' : 'text-gray-400'
-                  }`}>
-                    {conv.timestamp}
-                  </p>
-                </button>
-              ))}
+              {loadingList && <p className="text-sm text-gray-500">Loading...</p>}
+              {!loadingList && filteredConversations.length === 0 && (
+                <p className="text-sm text-gray-500">No consultations found</p>
+              )}
+              {filteredConversations.map((conv) => {
+                const unread = conv.last_message_sender_role === 'farmer' ? 1 : 0;
+                return (
+                  <button
+                    key={conv.id}
+                    onClick={() => setSelectedConversation(conv.id)}
+                    className={`w-full text-left p-4 rounded-lg transition-colors ${
+                      selectedConversation === conv.id
+                        ? 'bg-[#1976D2] text-white'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="font-medium">{conv.farmer_name || 'Unknown Farmer'}</p>
+                      {unread > 0 && (
+                        <Badge className="bg-red-500">{unread}</Badge>
+                      )}
+                      {conv.status === 'replied' && (
+                        <CheckCheck className="size-4 text-[#4CAF50]" />
+                      )}
+                    </div>
+                    <p className={`text-sm line-clamp-1 ${
+                      selectedConversation === conv.id ? 'text-blue-100' : 'text-[#455A64]'
+                    }`}>
+                      {conv.last_message || 'New consultation'}
+                    </p>
+                    <p className={`text-xs mt-1 ${
+                      selectedConversation === conv.id ? 'text-blue-200' : 'text-gray-400'
+                    }`}>
+                      {conv.last_message_at || ''}
+                    </p>
+                  </button>
+                );
+              })}
             </CardContent>
           </ScrollArea>
         </Card>
@@ -158,56 +205,78 @@ export default function ConsultationInbox() {
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>{selectedConv.farmer}</CardTitle>
+                    <CardTitle>{selectedConv.farmer_name || 'Unknown Farmer'}</CardTitle>
                     <Badge
                       variant={selectedConv.status === 'replied' ? 'secondary' : 'default'}
                       className={`mt-2 ${
                         selectedConv.status === 'replied'
                           ? 'bg-[#4CAF50]'
+                          : selectedConv.status === 'closed'
+                          ? 'bg-gray-500'
                           : 'bg-orange-500'
                       }`}
                     >
-                      {selectedConv.status === 'replied' ? 'Replied' : 'Unanswered'}
+                      {selectedConv.status === 'replied'
+                        ? 'Replied'
+                        : selectedConv.status === 'closed'
+                        ? 'Closed'
+                        : 'Unanswered'}
                     </Badge>
                   </div>
                   {/* Pinned Image */}
                   <div className="text-right">
                     <p className="text-xs text-[#455A64] mb-2">Context Photo</p>
-                    <img
-                      src={selectedConv.image}
-                      alt="Context"
-                      className="w-20 h-20 rounded-lg object-cover border-2 border-gray-200"
-                    />
+                    {selectedConv.scan_image_url ? (
+                      <img
+                        src={selectedConv.scan_image_url}
+                        alt="Context"
+                        className="w-20 h-20 rounded-lg object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                        <ImageIcon className="size-5 text-gray-400" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardHeader>
 
               <ScrollArea className="flex-1 p-6">
-                <div className="space-y-4">
-                  {messages.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${msg.sender === 'officer' ? 'justify-end' : 'justify-start'}`}
-                    >
+                {loadingDetail && <p className="text-sm text-gray-500">Loading...</p>}
+                {!loadingDetail && (
+                  <div className="space-y-4">
+                    {messages.map((msg) => (
                       <div
-                        className={`max-w-[70%] rounded-lg p-4 ${
-                          msg.sender === 'officer'
-                            ? 'bg-[#1976D2] text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
+                        key={msg.id}
+                        className={`flex ${msg.sender_role === 'officer' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <p className="text-sm">{msg.text}</p>
-                        <p
-                          className={`text-xs mt-2 ${
-                            msg.sender === 'officer' ? 'text-blue-200' : 'text-gray-500'
+                        <div
+                          className={`max-w-[70%] rounded-lg p-4 ${
+                            msg.sender_role === 'officer'
+                              ? 'bg-[#1976D2] text-white'
+                              : 'bg-gray-100 text-gray-900'
                           }`}
                         >
-                          {msg.time}
-                        </p>
+                          <p className="text-sm">{msg.body}</p>
+                          {msg.attachment_url && (
+                            <img
+                              src={msg.attachment_url}
+                              alt="Attachment"
+                              className="mt-2 rounded-lg border max-h-40 object-cover"
+                            />
+                          )}
+                          <p
+                            className={`text-xs mt-2 ${
+                              msg.sender_role === 'officer' ? 'text-blue-200' : 'text-gray-500'
+                            }`}
+                          >
+                            {msg.created_at}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </ScrollArea>
 
               <div className="p-4 border-t">

@@ -1,23 +1,71 @@
-import { useState } from 'react';
-import { ArrowLeft, Send, Paperclip, Image as ImageIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Send, Paperclip, Image as ImageIcon, X } from 'lucide-react';
 
 interface ExpertScreenProps {
   onBack: () => void;
-  hasAttachment?: boolean;
+  scanId?: number | null;
+  scanImageUrl?: string | null;
 }
 
-export function ExpertScreen({ onBack, hasAttachment = false }: ExpertScreenProps) {
+export function ExpertScreen({ onBack, scanId = null, scanImageUrl = null }: ExpertScreenProps) {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
   const [message, setMessage] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!attachmentFile) {
+      setAttachmentPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(attachmentFile);
+    setAttachmentPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [attachmentFile]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    // Mock submission - in real app would send to backend
-    setTimeout(() => {
-      setSubmitted(false);
+    if (message.trim().length < 20) return;
+    const token = localStorage.getItem('gg_token');
+    if (!token) {
+      onBack();
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+    try {
+      const form = new FormData();
+      form.append('message', message.trim());
+      if (scanId) form.append('scan_id', String(scanId));
+      if (attachmentFile) form.append('attachment', attachmentFile);
+
+      const res = await fetch(`${apiBase}/farmer/consultations`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (res.status === 401) {
+        localStorage.removeItem('gg_token');
+        window.location.href = '/';
+        return;
+      }
+      if (!res.ok) {
+        throw new Error('Failed to send request');
+      }
+      setSent(true);
       setMessage('');
-    }, 2000);
+      setAttachmentFile(null);
+      setTimeout(() => setSent(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send request');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -49,24 +97,53 @@ export function ExpertScreen({ onBack, hasAttachment = false }: ExpertScreenProp
         </div>
       </div>
 
-      {/* Attachment Preview */}
-      {hasAttachment && (
+      {/* Attachment Preview (Scan) */}
+      {scanImageUrl && (
         <div className="px-6 mb-4">
           <div className="bg-white rounded-xl p-4 shadow-md flex items-center gap-4">
-            <div
-              className="w-16 h-16 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: '#4CAF50' }}
-            >
-              <ImageIcon className="w-8 h-8 text-white" />
-            </div>
+            <img
+              src={scanImageUrl}
+              alt="Scan attachment"
+              className="w-16 h-16 rounded-lg object-cover border"
+            />
             <div className="flex-1">
               <p className="font-semibold text-base" style={{ color: '#333' }}>
-                Pest Image Attached
+                Scan Image Attached
               </p>
               <p className="text-sm" style={{ color: '#666' }}>
                 From recent scan
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attachment Preview (Manual) */}
+      {attachmentPreview && (
+        <div className="px-6 mb-4">
+          <div className="bg-white rounded-xl p-4 shadow-md flex items-center gap-4">
+            <img
+              src={attachmentPreview}
+              alt="Attachment preview"
+              className="w-16 h-16 rounded-lg object-cover border"
+            />
+            <div className="flex-1">
+              <p className="font-semibold text-base" style={{ color: '#333' }}>
+                Photo Attached
+              </p>
+              <p className="text-sm" style={{ color: '#666' }}>
+                {attachmentFile?.name}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAttachmentFile(null)}
+              className="p-2 rounded-full"
+              style={{ backgroundColor: '#F5F5F5' }}
+              aria-label="Remove attachment"
+            >
+              <X className="w-4 h-4" style={{ color: '#666' }} />
+            </button>
           </div>
         </div>
       )}
@@ -90,12 +167,26 @@ export function ExpertScreen({ onBack, hasAttachment = false }: ExpertScreenProp
           <p className="text-sm mt-2" style={{ color: '#999' }}>
             Minimum 20 characters
           </p>
+          {error && <p className="text-sm mt-2 text-red-600">{error}</p>}
         </div>
 
         <div className="pb-6">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null;
+              setAttachmentFile(file);
+              if (fileInputRef.current) fileInputRef.current.value = '';
+            }}
+          />
+
           {/* Attachment Button */}
           <button
             type="button"
+            onClick={() => fileInputRef.current?.click()}
             className="w-full mb-4 py-4 rounded-xl text-base font-semibold flex items-center justify-center gap-3 transition-transform active:scale-95"
             style={{
               backgroundColor: 'white',
@@ -104,13 +195,13 @@ export function ExpertScreen({ onBack, hasAttachment = false }: ExpertScreenProp
             }}
           >
             <Paperclip className="w-5 h-5" />
-            Attach Photos
+            {attachmentFile ? 'Replace Photo' : 'Attach Photo'}
           </button>
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={message.length < 20 || submitted}
+            disabled={message.trim().length < 20 || submitting}
             className="w-full py-5 rounded-xl text-lg font-bold flex items-center justify-center gap-3 transition-all disabled:opacity-50"
             style={{
               backgroundColor: '#4CAF50',
@@ -118,7 +209,7 @@ export function ExpertScreen({ onBack, hasAttachment = false }: ExpertScreenProp
             }}
           >
             <Send className="w-6 h-6" />
-            {submitted ? 'Sent Successfully!' : 'Send to Agriculture Officer'}
+            {submitting ? 'Sending...' : sent ? 'Sent Successfully!' : 'Send to Agriculture Officer'}
           </button>
         </div>
       </form>

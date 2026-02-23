@@ -22,6 +22,10 @@ export default function App() {
     chemical: string[];
     imageUrl?: string | null;
   }>(null);
+  const [scanMeta, setScanMeta] = useState<{
+    id: number | null;
+    imageUrl: string | null;
+  }>({ id: null, imageUrl: null });
   const [fromResult, setFromResult] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState('');
@@ -81,6 +85,10 @@ export default function App() {
         traditional: pest.traditional_methods || [],
         chemical: pest.chemical_methods || [],
         imageUrl: pest.image_url,
+      });
+      setScanMeta({
+        id: data.scan_id ?? null,
+        imageUrl: data.scan_image_url ?? null,
       });
       setCurrentScreen('result');
     } catch (err) {
@@ -155,7 +163,11 @@ export default function App() {
       )}
 
       {currentScreen === 'expert' && (
-        <ExpertScreen onBack={handleBackToHome} hasAttachment={fromResult} />
+        <ExpertScreen
+          onBack={handleBackToHome}
+          scanId={fromResult ? scanMeta.id : null}
+          scanImageUrl={fromResult ? scanMeta.imageUrl : null}
+        />
       )}
 
       {currentScreen === 'history' && (
