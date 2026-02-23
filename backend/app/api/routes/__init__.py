@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import auth, health, admin_users, admin_pests, admin_pest_images, farmer_scan, consultations, officer_farmers, officer_dashboard, knowledge_base, feedback
+from app.api.routes import auth, health, admin_users, admin_pests, admin_pest_images, farmer_scan, consultations, officer_farmers, officer_dashboard, knowledge_base, feedback, admin_analytics
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -14,3 +14,4 @@ api_router.include_router(officer_farmers.router)
 api_router.include_router(officer_dashboard.router)
 api_router.include_router(knowledge_base.router)
 api_router.include_router(feedback.router)
+api_router.include_router(admin_analytics.router)

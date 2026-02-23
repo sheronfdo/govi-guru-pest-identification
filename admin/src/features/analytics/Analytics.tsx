@@ -1,35 +1,36 @@
+import { useEffect, useState } from 'react';
 import { Download, TrendingUp } from 'lucide-react';
 import { Card } from '../../shared/ui/card';
 import { Button } from '../../shared/ui/button';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export function Analytics() {
-  const pestData = [
-    { name: 'Brown Planthopper', count: 145 },
-    { name: 'Fruit Fly', count: 98 },
-    { name: 'Leaf Roller', count: 76 },
-    { name: 'Stem Borer', count: 64 },
-    { name: 'Coconut Beetle', count: 52 },
-  ];
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState({
+    pest_counts: [] as Array<{ name: string; count: number }>,
+    registration_trend: [] as Array<{ month: string; users: number }>,
+    regions: [] as Array<{ name: string; intensity: string; count: number }>,
+    total_scans_this_month: 0,
+    avg_response_hours: 0,
+    ai_accuracy_rate: 0,
+  });
 
-  const trendData = [
-    { month: 'Aug', users: 120 },
-    { month: 'Sep', users: 185 },
-    { month: 'Oct', users: 240 },
-    { month: 'Nov', users: 310 },
-    { month: 'Dec', users: 385 },
-    { month: 'Jan', users: 480 },
-    { month: 'Feb', users: 520 },
-  ];
 
-  const regions = [
-    { name: 'Anuradhapura', intensity: 'high', count: 234 },
-    { name: 'Polonnaruwa', intensity: 'high', count: 198 },
-    { name: 'Ampara', intensity: 'medium', count: 156 },
-    { name: 'Hambantota', intensity: 'medium', count: 142 },
-    { name: 'Kurunegala', intensity: 'low', count: 89 },
-    { name: 'Kandy', intensity: 'low', count: 76 },
-  ];
+  useEffect(() => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoading(true);
+    fetch(`${apiBase}/admin/analytics`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load analytics');
+        return res.json();
+      })
+      .then((payload) => setData(payload))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -69,7 +70,10 @@ export function Analytics() {
           {/* Regional Stats */}
           <div className="space-y-3">
             <h3 className="font-medium mb-4">Regional Pest Activity</h3>
-            {regions.map((region, index) => (
+            {loading && (
+              <p className="text-sm text-gray-600">Loading regional activity...</p>
+            )}
+            {!loading && data.regions.map((region, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div
@@ -109,7 +113,7 @@ export function Analytics() {
         <Card className="p-6">
           <h2 className="text-xl mb-4">Most Common Pests Detected this Month</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={pestData}>
+            <BarChart data={data.pest_counts}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
               <YAxis />
@@ -123,7 +127,7 @@ export function Analytics() {
         <Card className="p-6">
           <h2 className="text-xl mb-4">User Registrations Trend</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={trendData}>
+            <LineChart data={data.registration_trend}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -146,7 +150,7 @@ export function Analytics() {
       <div className="grid grid-cols-3 gap-6">
         <Card className="p-6">
           <div className="text-sm text-gray-600 mb-2">Total Scans This Month</div>
-          <div className="text-3xl font-medium mb-2">4,567</div>
+          <div className="text-3xl font-medium mb-2">{data.total_scans_this_month}</div>
           <div className="text-sm text-green-600 flex items-center gap-1">
             <TrendingUp className="w-4 h-4" />
             +23% from last month
@@ -154,7 +158,7 @@ export function Analytics() {
         </Card>
         <Card className="p-6">
           <div className="text-sm text-gray-600 mb-2">Average Response Time</div>
-          <div className="text-3xl font-medium mb-2">2.4h</div>
+          <div className="text-3xl font-medium mb-2">{data.avg_response_hours}h</div>
           <div className="text-sm text-green-600 flex items-center gap-1">
             <TrendingUp className="w-4 h-4" />
             12% improvement
@@ -162,7 +166,7 @@ export function Analytics() {
         </Card>
         <Card className="p-6">
           <div className="text-sm text-gray-600 mb-2">AI Accuracy Rate</div>
-          <div className="text-3xl font-medium mb-2">94.2%</div>
+          <div className="text-3xl font-medium mb-2">{data.ai_accuracy_rate}%</div>
           <div className="text-sm text-green-600 flex items-center gap-1">
             <TrendingUp className="w-4 h-4" />
             +2.1% accuracy

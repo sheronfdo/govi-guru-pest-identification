@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.sql import func
 from app.db.base import Base
 
 
@@ -14,3 +15,4 @@ class User(Base):
     region = Column(String(128), nullable=True)
     officer_id = Column(String(64), nullable=True)
     status = Column(String(32), default="active")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
