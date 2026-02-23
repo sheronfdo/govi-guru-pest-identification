@@ -1,21 +1,38 @@
+import { useEffect, useState } from 'react';
 import { Activity, Server, Database, AlertCircle } from 'lucide-react';
 import { Card } from '../../shared/ui/card';
 
 export function DashboardHome() {
-  const stats = [
-    { title: 'Total Farmers', value: '1,247', icon: '👨‍🌾', color: 'bg-blue-50' },
-    { title: 'Active Agri-Officers', value: '48', icon: '👨‍💼', color: 'bg-green-50' },
-    { title: "Today's Pest Scans", value: '156', icon: '🔍', color: 'bg-purple-50' },
-    { title: 'Pending Issues', value: '12', icon: '⚠️', color: 'bg-orange-50' },
-  ];
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState({
+    total_farmers: 0,
+    active_officers: 0,
+    scans_today: 0,
+    pending_issues: 0,
+    recent_activity: [] as Array<{ user: string; action: string; time: string }>,
+  });
 
-  const recentActivity = [
-    { user: 'Farmer Amal', action: 'uploaded a photo', time: '5 mins ago' },
-    { user: 'Officer Nimal', action: 'verified a pest report', time: '12 mins ago' },
-    { user: 'Farmer Kumari', action: 'requested consultation', time: '25 mins ago' },
-    { user: 'Farmer Sunil', action: 'uploaded a photo', time: '1 hour ago' },
-    { user: 'Officer Kamal', action: 'updated pest database', time: '2 hours ago' },
-    { user: 'Farmer Priya', action: 'provided feedback', time: '3 hours ago' },
+  useEffect(() => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoading(true);
+    fetch(`${apiBase}/admin/dashboard`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load dashboard');
+        return res.json();
+      })
+      .then((payload) => setData(payload))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const stats = [
+    { title: 'Total Farmers', value: data.total_farmers.toLocaleString(), icon: '👨‍🌾', color: 'bg-blue-50' },
+    { title: 'Active Agri-Officers', value: data.active_officers.toLocaleString(), icon: '👨‍💼', color: 'bg-green-50' },
+    { title: "Today's Pest Scans", value: data.scans_today.toLocaleString(), icon: '🔍', color: 'bg-purple-50' },
+    { title: 'Pending Issues', value: data.pending_issues.toLocaleString(), icon: '⚠️', color: 'bg-orange-50' },
   ];
 
   return (
@@ -47,7 +64,8 @@ export function DashboardHome() {
             <h2 className="text-xl">Recent Activity Log</h2>
           </div>
           <div className="space-y-3">
-            {recentActivity.map((activity, index) => (
+            {loading && <p className="text-sm text-gray-600">Loading activity...</p>}
+            {!loading && data.recent_activity.map((activity, index) => (
               <div key={index} className="flex items-start gap-3 pb-3 border-b last:border-0">
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-1">
                   <span className="text-xs">👤</span>
