@@ -4,7 +4,13 @@ from sqlalchemy.orm import Session
 from app.core.security import verify_password, get_password_hash, create_access_token
 from app.core.config import settings
 from app.models.user import User
-from app.repositories.user_repo import get_user_by_identifier, get_user_by_email, get_user_by_phone, create_user
+from app.repositories.user_repo import (
+    get_user_by_identifier,
+    get_user_by_email,
+    get_user_by_phone,
+    get_user_by_officer_id,
+    create_user,
+)
 
 
 class AuthService:
@@ -49,6 +55,10 @@ class AuthService:
     def request_officer_access(db: Session, full_name: str, officer_id: str, region: str, phone: str, password: str) -> User:
         # In production, this should create a pending approval record.
         domain = settings.system_email_domain
+        if get_user_by_officer_id(db, officer_id):
+            raise ValueError("Officer ID already registered")
+        if get_user_by_phone(db, phone):
+            raise ValueError("Phone number already registered")
         user = User(
             email=f"officer_{officer_id}@{domain}",
             phone=phone,

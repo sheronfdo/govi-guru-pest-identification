@@ -13,6 +13,7 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin }: LoginProps) {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: ''
@@ -28,13 +29,15 @@ export default function Login({ onLogin }: LoginProps) {
     password: '',
     confirmPassword: ''
   });
+  const [signupError, setSignupError] = useState('');
+  const [signupLoading, setSignupLoading] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginForm.email || !loginForm.password) return;
     setLoginError('');
     setLoginLoading(true);
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/officer/login`, {
+    fetch(`${apiBase}/auth/officer/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier: loginForm.email, password: loginForm.password, role: 'officer' }),
@@ -45,7 +48,7 @@ export default function Login({ onLogin }: LoginProps) {
       })
       .then(async (data) => {
         localStorage.setItem('gg_token', data.access_token);
-        const meRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+        const meRes = await fetch(`${apiBase}/auth/me`, {
           headers: { Authorization: `Bearer ${data.access_token}` },
         });
         if (!meRes.ok) throw new Error('Failed to load profile');
@@ -61,12 +64,18 @@ export default function Login({ onLogin }: LoginProps) {
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    setSignupError('');
     if (signupForm.password !== signupForm.confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
+    if (signupForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
     if (signupForm.fullName && signupForm.officerId && signupForm.region) {
-      fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/officers/request-access`, {
+      setSignupLoading(true);
+      fetch(`${apiBase}/auth/officers/request-access`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -78,17 +87,26 @@ export default function Login({ onLogin }: LoginProps) {
         }),
       })
         .then((res) => {
-          if (!res.ok) throw new Error('Request failed');
+          if (!res.ok) {
+            return res.json().then((data) => {
+              throw new Error(data?.detail || 'Request failed');
+            });
+          }
           return res.json();
         })
         .then(() => {
-          toast.success('Access request submitted! Admin approval pending.');
+          toast.success('Registration successful! You can log in now.');
           setTimeout(() => {
             const loginTab = document.querySelector('[value="login"]') as HTMLElement;
             loginTab?.click();
           }, 2000);
         })
-        .catch(() => toast.error('Failed to submit request'));
+        .catch((err) => {
+          const message = err instanceof Error ? err.message : 'Failed to submit request';
+          setSignupError(message);
+          toast.error(message);
+        })
+        .finally(() => setSignupLoading(false));
     }
   };
 
@@ -130,7 +148,7 @@ export default function Login({ onLogin }: LoginProps) {
               <Alert className="mb-4 bg-blue-50 border-blue-200">
                 <Info className="size-4 text-[#1976D2]" />
                 <AlertDescription className="text-sm">
-                  <strong>Demo Login:</strong> Enter any text in both fields to access the portal
+                  <strong>Login:</strong> Use your Officer ID, phone, or email with your password
                 </AlertDescription>
               </Alert>
               
@@ -140,7 +158,7 @@ export default function Login({ onLogin }: LoginProps) {
                   <Input
                     id="email"
                     type="text"
-                    placeholder="Type anything (e.g., demo)"
+                    placeholder="Officer ID / Email / Phone"
                     value={loginForm.email}
                     onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                     required
@@ -151,7 +169,7 @@ export default function Login({ onLogin }: LoginProps) {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Type anything (e.g., demo123)"
+                    placeholder="Your password"
                     value={loginForm.password}
                     onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                     required
@@ -234,11 +252,14 @@ export default function Login({ onLogin }: LoginProps) {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full bg-[#4CAF50] hover:bg-[#45a049]">
-                  Request Access
+                <Button type="submit" className="w-full bg-[#4CAF50] hover:bg-[#45a049]" disabled={signupLoading}>
+                  {signupLoading ? 'Submitting...' : 'Request Access'}
                 </Button>
+                {signupError && (
+                  <div className="mt-3 text-sm text-red-600 text-center">{signupError}</div>
+                )}
                 <p className="text-xs text-center text-muted-foreground mt-2">
-                  Your request will be reviewed by admin for approval
+                  After registration, you can log in with your Officer ID or phone
                 </p>
               </form>
             </TabsContent>

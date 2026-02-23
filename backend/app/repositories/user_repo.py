@@ -22,6 +22,10 @@ def get_user_by_phone(db: Session, phone: str) -> Optional[User]:
     return db.query(User).filter(User.phone == phone).first()
 
 
+def get_user_by_officer_id(db: Session, officer_id: str) -> Optional[User]:
+    return db.query(User).filter(User.officer_id == officer_id).first()
+
+
 def list_users(
     db: Session,
     role: Optional[str] = None,
