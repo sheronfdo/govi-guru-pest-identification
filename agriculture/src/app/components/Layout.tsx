@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router';
-import { Home, CheckSquare, MessageSquare, BookOpen, Users, LogOut, Menu } from 'lucide-react';
+import { Home, CheckSquare, MessageSquare, BookOpen, Users, LogOut, Menu, MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { useState } from 'react';
@@ -23,6 +23,7 @@ export default function Layout({ officerData, onLogout }: LayoutProps) {
     { path: '/inbox', icon: MessageSquare, label: 'Inbox' },
     { path: '/knowledge-base', icon: BookOpen, label: 'Knowledge Base' },
     { path: '/farmers', icon: Users, label: 'Farmers' },
+    { path: '/feedback', icon: MessageCircle, label: 'Feedback' },
   ];
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (

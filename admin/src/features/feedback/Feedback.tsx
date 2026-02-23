@@ -1,71 +1,58 @@
+import { useEffect, useState } from 'react';
 import { MessageSquare, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { Card } from '../../shared/ui/card';
 import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 
 export function Feedback() {
-  const feedbacks = [
-    {
-      id: 'FB001',
-      from: 'Amal Perera',
-      role: 'Farmer',
-      subject: 'Great app! Helped identify pest quickly',
-      message: 'Thank you for this wonderful system. It helped me identify the pest in my rice field within minutes.',
-      date: '2026-02-07 09:30',
-      status: 'resolved',
-      priority: 'normal',
-    },
-    {
-      id: 'FB002',
-      from: 'Kumari Silva',
-      role: 'Farmer',
-      subject: 'Need help with pest control',
-      message: 'I identified the pest but need more information on organic control methods. Can you provide more details?',
-      date: '2026-02-07 08:15',
-      status: 'pending',
-      priority: 'urgent',
-    },
-    {
-      id: 'FB003',
-      from: 'Nimal Bandara',
-      role: 'Officer',
-      subject: 'Feature request: Multilingual support',
-      message: 'It would be great to have more Tamil language support for farmers in the Northern Province.',
-      date: '2026-02-06 16:45',
-      status: 'pending',
-      priority: 'normal',
-    },
-    {
-      id: 'FB004',
-      from: 'Priya Jayawardena',
-      role: 'Farmer',
-      subject: 'App not loading images',
-      message: 'When I try to upload photos from my phone, the app shows an error. Please help.',
-      date: '2026-02-06 14:20',
-      status: 'urgent',
-      priority: 'urgent',
-    },
-    {
-      id: 'FB005',
-      from: 'Sunil Rathnayake',
-      role: 'Farmer',
-      subject: 'Excellent traditional methods section',
-      message: 'The Kem methods section is very useful. My grandfather used similar methods. Great to see traditional knowledge preserved.',
-      date: '2026-02-06 11:10',
-      status: 'resolved',
-      priority: 'normal',
-    },
-    {
-      id: 'FB006',
-      from: 'Chaminda Fernando',
-      role: 'Farmer',
-      subject: 'Question about crop stages',
-      message: 'How do I know which crop stage my plants are in? Need more guidance on this.',
-      date: '2026-02-05 17:30',
-      status: 'pending',
-      priority: 'normal',
-    },
-  ];
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  const [feedbacks, setFeedbacks] = useState<Array<{
+    id: number;
+    role: string;
+    subject: string;
+    message: string;
+    created_at: string;
+    status: string;
+    priority: string;
+    user_id?: number | null;
+  }>>([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadFeedbacks = async () => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/admin/feedback`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load feedback');
+      const data = await res.json();
+      setFeedbacks(data.items || []);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFeedbacks();
+  }, []);
+
+  const markResolved = async (id: number) => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    const res = await fetch(`${apiBase}/admin/feedback/${id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: 'resolved' }),
+    });
+    if (res.ok) {
+      await loadFeedbacks();
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -116,6 +103,9 @@ export function Feedback() {
 
       {/* Feedback List */}
       <div className="space-y-4">
+        {loading && (
+          <Card className="p-6 text-gray-600">Loading feedback...</Card>
+        )}
         {feedbacks.map((feedback) => (
           <Card
             key={feedback.id}
@@ -134,15 +124,15 @@ export function Feedback() {
                     {getStatusBadge(feedback.status)}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                    <span className="font-medium">{feedback.from}</span>
+                    <span className="font-medium">User #{feedback.user_id || feedback.id}</span>
                     <span>•</span>
                     <Badge variant="outline" className="text-xs">
                       {feedback.role}
                     </Badge>
                     <span>•</span>
-                    <span>{feedback.date}</span>
+                    <span>{feedback.created_at}</span>
                     <span>•</span>
-                    <span className="text-gray-500">ID: {feedback.id}</span>
+                    <span className="text-gray-500">ID: FB{String(feedback.id).padStart(4, '0')}</span>
                   </div>
                   <p className="text-gray-700">{feedback.message}</p>
                 </div>
@@ -161,6 +151,7 @@ export function Feedback() {
                   size="sm"
                   className="gap-2"
                   style={{ backgroundColor: '#2E7D32' }}
+                  onClick={() => markResolved(feedback.id)}
                 >
                   <CheckCircle className="w-4 h-4" />
                   Mark as Resolved

@@ -11,6 +11,7 @@ import { ScanDetailScreen } from './components/scan-detail-screen';
 import { ProfileScreen } from './components/profile-screen';
 import { KnowledgeBaseListScreen } from './components/knowledge-base-list-screen';
 import { KnowledgeArticleScreen } from './components/knowledge-article-screen';
+import { FeedbackScreen } from './components/feedback-screen';
 
 type Screen =
   | 'login'
@@ -24,7 +25,8 @@ type Screen =
   | 'consultation-detail'
   | 'profile'
   | 'knowledge-base'
-  | 'knowledge-article';
+  | 'knowledge-article'
+  | 'feedback';
 
 export default function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -244,7 +246,7 @@ export default function App() {
       )}
 
       {currentScreen === 'profile' && (
-        <ProfileScreen onBack={handleBackToHome} onLogout={handleLogout} />
+        <ProfileScreen onBack={handleBackToHome} onLogout={handleLogout} onFeedback={() => setCurrentScreen('feedback')} />
       )}
 
       {currentScreen === 'knowledge-base' && (
@@ -253,6 +255,10 @@ export default function App() {
 
       {currentScreen === 'knowledge-article' && (
         <KnowledgeArticleScreen articleId={selectedArticleId} onBack={() => setCurrentScreen('knowledge-base')} />
+      )}
+
+      {currentScreen === 'feedback' && (
+        <FeedbackScreen onBack={() => setCurrentScreen('profile')} />
       )}
     </div>
   );

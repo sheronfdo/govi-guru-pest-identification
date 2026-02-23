@@ -6,6 +6,7 @@ import VerificationWorkbench from './components/VerificationWorkbench';
 import ConsultationInbox from './components/ConsultationInbox';
 import KnowledgeBaseEditor from './components/KnowledgeBaseEditor';
 import FarmerDirectory from './components/FarmerDirectory';
+import FeedbackForm from './components/FeedbackForm';
 import Layout from './components/Layout';
 import { Toaster } from './components/ui/sonner';
 
@@ -82,6 +83,7 @@ function App() {
           <Route path="verification" element={<VerificationWorkbench />} />
           <Route path="inbox" element={<ConsultationInbox />} />
           <Route path="knowledge-base" element={<KnowledgeBaseEditor />} />
+          <Route path="feedback" element={<FeedbackForm />} />
           <Route path="farmers" element={<FarmerDirectory officerData={officerData} />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />

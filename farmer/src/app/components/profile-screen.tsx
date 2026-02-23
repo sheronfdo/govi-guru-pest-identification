@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, User, Mail, MapPin, ShieldCheck, LogOut } from 'lucide-react';
+import { ArrowLeft, User, Mail, MapPin, ShieldCheck, LogOut, MessageCircle } from 'lucide-react';
 
 interface ProfileScreenProps {
   onBack: () => void;
   onLogout: () => void;
+  onFeedback: () => void;
 }
 
 interface ProfileData {
@@ -15,7 +16,7 @@ interface ProfileData {
   officer_id: string | null;
 }
 
-export function ProfileScreen({ onBack, onLogout }: ProfileScreenProps) {
+export function ProfileScreen({ onBack, onLogout, onFeedback }: ProfileScreenProps) {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -142,7 +143,15 @@ export function ProfileScreen({ onBack, onLogout }: ProfileScreenProps) {
           </div>
         )}
 
-        <div className="pt-4">
+        <div className="pt-4 space-y-3">
+          <button
+            onClick={onFeedback}
+            className="w-full py-4 rounded-xl text-base font-bold text-white flex items-center justify-center gap-2"
+            style={{ backgroundColor: '#1976D2' }}
+          >
+            <MessageCircle className="w-5 h-5" />
+            Send Feedback
+          </button>
           <button
             onClick={onLogout}
             className="w-full py-4 rounded-xl text-base font-bold text-white flex items-center justify-center gap-2"
