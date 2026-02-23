@@ -4,10 +4,21 @@ import { HomeDashboard } from './components/home-dashboard';
 import { CameraScreen } from './components/camera-screen';
 import { ResultScreen } from './components/result-screen';
 import { ExpertScreen } from './components/expert-screen';
+import { ConsultationListScreen } from './components/consultation-list-screen';
+import { ConsultationDetailScreen } from './components/consultation-detail-screen';
 import { HistoryScreen } from './components/history-screen';
 import { ScanDetailScreen } from './components/scan-detail-screen';
 
-type Screen = 'login' | 'home' | 'camera' | 'result' | 'expert' | 'history' | 'scan-detail';
+type Screen =
+  | 'login'
+  | 'home'
+  | 'camera'
+  | 'result'
+  | 'expert'
+  | 'history'
+  | 'scan-detail'
+  | 'consultations'
+  | 'consultation-detail';
 
 export default function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -31,6 +42,7 @@ export default function App() {
   const [scanError, setScanError] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedScanId, setSelectedScanId] = useState<number | null>(null);
+  const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
 
   const handleLogin = (name: string) => {
     setFarmerName(name);
@@ -113,6 +125,11 @@ export default function App() {
     setCurrentScreen('scan-detail');
   };
 
+  const handleSelectConsultation = (consultationId: number) => {
+    setSelectedConsultationId(consultationId);
+    setCurrentScreen('consultation-detail');
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('gg_token');
     if (!token) return;
@@ -167,6 +184,8 @@ export default function App() {
           onBack={handleBackToHome}
           scanId={fromResult ? scanMeta.id : null}
           scanImageUrl={fromResult ? scanMeta.imageUrl : null}
+          onSubmitted={() => setCurrentScreen('consultations')}
+          onViewConsultations={() => setCurrentScreen('consultations')}
         />
       )}
 
@@ -179,6 +198,21 @@ export default function App() {
 
       {currentScreen === 'scan-detail' && (
         <ScanDetailScreen scanId={selectedScanId} onBack={handleBackToHome} />
+      )}
+
+      {currentScreen === 'consultations' && (
+        <ConsultationListScreen
+          onBack={handleBackToHome}
+          onSelect={handleSelectConsultation}
+          onNew={() => setCurrentScreen('expert')}
+        />
+      )}
+
+      {currentScreen === 'consultation-detail' && (
+        <ConsultationDetailScreen
+          consultationId={selectedConsultationId}
+          onBack={() => setCurrentScreen('consultations')}
+        />
       )}
     </div>
   );

@@ -5,9 +5,17 @@ interface ExpertScreenProps {
   onBack: () => void;
   scanId?: number | null;
   scanImageUrl?: string | null;
+  onSubmitted?: () => void;
+  onViewConsultations?: () => void;
 }
 
-export function ExpertScreen({ onBack, scanId = null, scanImageUrl = null }: ExpertScreenProps) {
+export function ExpertScreen({
+  onBack,
+  scanId = null,
+  scanImageUrl = null,
+  onSubmitted,
+  onViewConsultations,
+}: ExpertScreenProps) {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -60,6 +68,7 @@ export function ExpertScreen({ onBack, scanId = null, scanImageUrl = null }: Exp
       setSent(true);
       setMessage('');
       setAttachmentFile(null);
+      onSubmitted?.();
       setTimeout(() => setSent(false), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send request');
@@ -94,6 +103,20 @@ export function ExpertScreen({ onBack, scanId = null, scanImageUrl = null }: Exp
           <p className="text-base" style={{ color: '#666' }}>
             Our agricultural experts will respond within 24 hours. Describe your problem in detail.
           </p>
+          {onViewConsultations && (
+            <button
+              type="button"
+              onClick={onViewConsultations}
+              className="mt-4 w-full py-3 rounded-xl text-sm font-semibold"
+              style={{
+                backgroundColor: '#FFF3E0',
+                color: '#795548',
+                border: '1px solid #F5D9B7',
+              }}
+            >
+              View My Consultations
+            </button>
+          )}
         </div>
       </div>
 

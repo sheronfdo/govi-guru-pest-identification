@@ -1,4 +1,4 @@
-import { Camera, History, MessageCircle, MapPin, User, Home, Bell, Sun, CloudRain } from 'lucide-react';
+import { Camera, History, MessageCircle, MessageSquare, User, Home, Bell, Sun, CloudRain } from 'lucide-react';
 
 interface HomeDashboardProps {
   farmerName: string;
@@ -68,11 +68,12 @@ export function HomeDashboard({ farmerName, onNavigate, activeTab }: HomeDashboa
           </button>
 
           <button
+            onClick={() => onNavigate('consultations')}
             className="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center gap-3 transition-transform active:scale-95"
             style={{ border: '2px solid #e0e0e0' }}
           >
-            <MapPin className="w-10 h-10" style={{ color: '#795548' }} />
-            <span className="font-semibold text-lg" style={{ color: '#333' }}>Field Status</span>
+            <MessageSquare className="w-10 h-10" style={{ color: '#795548' }} />
+            <span className="font-semibold text-lg" style={{ color: '#333' }}>My Consultations</span>
           </button>
 
           <button
