@@ -8,6 +8,7 @@ import {
   Settings as SettingsIcon,
   LogOut,
   Leaf,
+  BookOpen,
 } from 'lucide-react';
 import { Login } from '../features/auth/Login';
 import { DashboardHome } from '../features/dashboard/DashboardHome';
@@ -16,8 +17,16 @@ import { PestDatabase } from '../features/pests/PestDatabase';
 import { Analytics } from '../features/analytics/Analytics';
 import { Feedback } from '../features/feedback/Feedback';
 import { Settings } from '../features/settings/Settings';
+import { KnowledgeBaseAdmin } from '../features/knowledge/KnowledgeBaseAdmin';
 
-type Page = 'dashboard' | 'users' | 'pests' | 'analytics' | 'feedback' | 'settings';
+type Page =
+  | 'dashboard'
+  | 'users'
+  | 'pests'
+  | 'analytics'
+  | 'knowledge'
+  | 'feedback'
+  | 'settings';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -30,6 +39,7 @@ export default function App() {
     { id: 'users' as Page, label: 'User Management', icon: Users },
     { id: 'pests' as Page, label: 'Pest Database', icon: Bug },
     { id: 'analytics' as Page, label: 'Analytics', icon: BarChart3 },
+    { id: 'knowledge' as Page, label: 'Knowledge Base', icon: BookOpen },
     { id: 'feedback' as Page, label: 'Feedback', icon: MessageSquare },
     { id: 'settings' as Page, label: 'Settings', icon: SettingsIcon },
   ];
@@ -54,6 +64,8 @@ export default function App() {
         return <PestDatabase />;
       case 'analytics':
         return <Analytics />;
+      case 'knowledge':
+        return <KnowledgeBaseAdmin />;
       case 'feedback':
         return <Feedback />;
       case 'settings':

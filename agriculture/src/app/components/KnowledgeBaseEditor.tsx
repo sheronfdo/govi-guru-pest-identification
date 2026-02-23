@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
-import { BookOpen, Upload, Eye, Save, PlusCircle } from 'lucide-react';
+import { BookOpen, Upload, Eye, Save, PlusCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface KnowledgeArticle {
@@ -91,6 +91,25 @@ export default function KnowledgeBaseEditor() {
       resetForm();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save article');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedId) return;
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    if (!confirm('Delete this article permanently?')) return;
+    try {
+      const res = await fetch(`${apiBase}/officer/knowledge-base/${selectedId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete article');
+      toast.success('Article deleted');
+      await loadArticles();
+      resetForm();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete article');
     }
   };
 
@@ -263,6 +282,17 @@ export default function KnowledgeBaseEditor() {
                     <Save className="size-4 mr-2" />
                     {selectedId ? 'Update Draft' : 'Save Draft'}
                   </Button>
+                  {selectedId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={handleDelete}
+                    >
+                      <Trash2 className="size-4 mr-2" />
+                      Delete
+                    </Button>
+                  )}
                 </div>
               </form>
             ) : (

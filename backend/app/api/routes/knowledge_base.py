@@ -169,6 +169,24 @@ def article_detail_officer(
     return _to_detail(article)
 
 
+@router.delete(
+    "/officer/knowledge-base/{article_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_role("officer"))],
+)
+def delete_article_officer(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    article = db.query(KnowledgeArticle).filter(KnowledgeArticle.id == article_id).first()
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+    db.delete(article)
+    db.commit()
+    return None
+
+
 @router.get(
     "/farmer/knowledge-base",
     response_model=KnowledgeArticleListResponse,
@@ -215,3 +233,47 @@ def article_detail_farmer(
     db.commit()
     db.refresh(article)
     return _to_detail(article)
+
+
+@router.get(
+    "/admin/knowledge-base",
+    response_model=KnowledgeArticleListResponse,
+    dependencies=[Depends(require_role("admin"))],
+)
+def list_articles_admin(
+    status_filter: Optional[str] = None,
+    q: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    query = db.query(KnowledgeArticle)
+    if status_filter:
+        query = query.filter(KnowledgeArticle.status == status_filter)
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            or_(
+                KnowledgeArticle.title.ilike(like),
+                KnowledgeArticle.category.ilike(like),
+            )
+        )
+    articles = query.order_by(KnowledgeArticle.updated_at.desc()).all()
+    return KnowledgeArticleListResponse(items=[_to_summary(a) for a in articles])
+
+
+@router.delete(
+    "/admin/knowledge-base/{article_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_role("admin"))],
+)
+def delete_article_admin(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    article = db.query(KnowledgeArticle).filter(KnowledgeArticle.id == article_id).first()
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+    db.delete(article)
+    db.commit()
+    return None
