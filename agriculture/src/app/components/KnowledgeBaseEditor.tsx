@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -6,45 +6,21 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
-import { BookOpen, Upload, Eye, Save } from 'lucide-react';
+import { BookOpen, Upload, Eye, Save, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-const mockArticles = [
-  {
-    id: 1,
-    title: 'Brown Planthopper Control Guide',
-    category: 'Pest Control',
-    status: 'published',
-    lastUpdated: '2024-02-05',
-    views: 342
-  },
-  {
-    id: 2,
-    title: 'Organic Fertilizer Best Practices',
-    category: 'Best Practices',
-    status: 'published',
-    lastUpdated: '2024-02-03',
-    views: 567
-  },
-  {
-    id: 3,
-    title: 'Rice Blast Disease Management',
-    category: 'Pest Control',
-    status: 'draft',
-    lastUpdated: '2024-02-07',
-    views: 0
-  },
-  {
-    id: 4,
-    title: 'Water Management for Paddy Fields',
-    category: 'Best Practices',
-    status: 'published',
-    lastUpdated: '2024-01-28',
-    views: 423
-  },
-];
+interface KnowledgeArticle {
+  id: number;
+  title: string;
+  category: string;
+  status: string;
+  cover_image_url?: string | null;
+  views: number;
+  updated_at: string;
+}
 
 export default function KnowledgeBaseEditor() {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -53,25 +29,112 @@ export default function KnowledgeBaseEditor() {
   });
 
   const [previewMode, setPreviewMode] = useState(false);
+  const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadArticles = async () => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/officer/knowledge-base`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load articles');
+      const data = await res.json();
+      setArticles(data.items || []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load articles');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadArticles();
+  }, []);
+
+  const resetForm = () => {
+    setSelectedId(null);
+    setFormData({ title: '', category: '', content: '', image: null });
+    setPreviewMode(false);
+  };
+
+  const submitArticle = async (statusValue: 'published' | 'draft') => {
+    if (!formData.title || !formData.category || !formData.content) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    const form = new FormData();
+    form.append('title', formData.title);
+    form.append('category', formData.category);
+    form.append('content', formData.content);
+    form.append('status_value', statusValue);
+    if (formData.image) form.append('image', formData.image);
+
+    try {
+      const url = selectedId
+        ? `${apiBase}/officer/knowledge-base/${selectedId}`
+        : `${apiBase}/officer/knowledge-base`;
+      const method = selectedId ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!res.ok) throw new Error('Failed to save article');
+      toast.success(statusValue === 'published' ? 'Article published!' : 'Draft saved');
+      await loadArticles();
+      resetForm();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save article');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.title && formData.category && formData.content) {
-      toast.success('Educational material published successfully!');
-      setFormData({ title: '', category: '', content: '', image: null });
-      setPreviewMode(false);
-    } else {
-      toast.error('Please fill in all required fields');
-    }
+    submitArticle('published');
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setFormData({ ...formData, image: file });
-      toast.success('Image uploaded successfully');
+      toast.success('Image uploaded');
     }
   };
+
+  const handleSelectArticle = async (article: KnowledgeArticle) => {
+    const token = localStorage.getItem('gg_token');
+    if (!token) return;
+    setSelectedId(article.id);
+    setPreviewMode(false);
+    try {
+      const res = await fetch(`${apiBase}/officer/knowledge-base/${article.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load article');
+      const full = await res.json();
+      setFormData({
+        title: full.title || '',
+        category: full.category || '',
+        content: full.content || '',
+        image: null,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load article');
+    }
+  };
+
+  const stats = useMemo(() => {
+    const total = articles.length;
+    const published = articles.filter((a) => a.status === 'published').length;
+    const views = articles.reduce((sum, a) => sum + (a.views || 0), 0);
+    return { total, published, views };
+  }, [articles]);
 
   return (
     <div className="space-y-6">
@@ -87,14 +150,24 @@ export default function KnowledgeBaseEditor() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Create New Article</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPreviewMode(!previewMode)}
-              >
-                <Eye className="size-4 mr-2" />
-                {previewMode ? 'Edit' : 'Preview'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPreviewMode(!previewMode)}
+                >
+                  <Eye className="size-4 mr-2" />
+                  {previewMode ? 'Edit' : 'Preview'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetForm}
+                >
+                  <PlusCircle className="size-4 mr-2" />
+                  New
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -180,15 +253,15 @@ export default function KnowledgeBaseEditor() {
                     className="flex-1 bg-[#1976D2] hover:bg-[#1565C0]"
                   >
                     <BookOpen className="size-4 mr-2" />
-                    Publish to Farmer App
+                    {selectedId ? 'Update & Publish' : 'Publish to Farmer App'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => toast.success('Draft saved')}
+                    onClick={() => submitArticle('draft')}
                   >
                     <Save className="size-4 mr-2" />
-                    Save Draft
+                    {selectedId ? 'Update Draft' : 'Save Draft'}
                   </Button>
                 </div>
               </form>
@@ -232,10 +305,12 @@ export default function KnowledgeBaseEditor() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockArticles.map((article) => (
+              {loading && <p className="text-sm text-[#455A64]">Loading...</p>}
+              {!loading && articles.map((article) => (
                 <div
                   key={article.id}
                   className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  onClick={() => handleSelectArticle(article)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-sm line-clamp-2">{article.title}</h3>
@@ -253,7 +328,7 @@ export default function KnowledgeBaseEditor() {
                   <div className="space-y-1">
                     <p className="text-xs text-[#455A64]">{article.category}</p>
                     <p className="text-xs text-[#455A64]">
-                      Updated: {article.lastUpdated}
+                      Updated: {article.updated_at}
                     </p>
                     {article.status === 'published' && (
                       <p className="text-xs text-[#1976D2]">
@@ -269,18 +344,18 @@ export default function KnowledgeBaseEditor() {
             <div className="mt-6 pt-4 border-t space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-[#455A64]">Total Articles</span>
-                <span className="text-lg">{mockArticles.length}</span>
+                <span className="text-lg">{stats.total}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-[#455A64]">Published</span>
                 <span className="text-lg text-[#4CAF50]">
-                  {mockArticles.filter(a => a.status === 'published').length}
+                  {stats.published}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-[#455A64]">Total Views</span>
                 <span className="text-lg text-[#1976D2]">
-                  {mockArticles.reduce((sum, a) => sum + a.views, 0)}
+                  {stats.views}
                 </span>
               </div>
             </div>

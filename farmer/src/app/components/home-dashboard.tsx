@@ -1,4 +1,4 @@
-import { Camera, History, MessageCircle, MessageSquare, User, Home, Bell, Sun, CloudRain } from 'lucide-react';
+import { Camera, History, MessageCircle, MessageSquare, User, Home, Bell, Sun, CloudRain, BookOpen } from 'lucide-react';
 
 interface HomeDashboardProps {
   farmerName: string;
@@ -83,6 +83,15 @@ export function HomeDashboard({ farmerName, onNavigate, activeTab }: HomeDashboa
           >
             <User className="w-10 h-10" style={{ color: '#795548' }} />
             <span className="font-semibold text-lg" style={{ color: '#333' }}>Profile</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('knowledge-base')}
+            className="bg-white p-6 rounded-xl shadow-md flex flex-col items-center justify-center gap-3 transition-transform active:scale-95"
+            style={{ border: '2px solid #e0e0e0' }}
+          >
+            <BookOpen className="w-10 h-10" style={{ color: '#4CAF50' }} />
+            <span className="font-semibold text-lg" style={{ color: '#333' }}>Knowledge Base</span>
           </button>
         </div>
       </div>

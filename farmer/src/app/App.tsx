@@ -9,6 +9,8 @@ import { ConsultationDetailScreen } from './components/consultation-detail-scree
 import { HistoryScreen } from './components/history-screen';
 import { ScanDetailScreen } from './components/scan-detail-screen';
 import { ProfileScreen } from './components/profile-screen';
+import { KnowledgeBaseListScreen } from './components/knowledge-base-list-screen';
+import { KnowledgeArticleScreen } from './components/knowledge-article-screen';
 
 type Screen =
   | 'login'
@@ -20,7 +22,9 @@ type Screen =
   | 'scan-detail'
   | 'consultations'
   | 'consultation-detail'
-  | 'profile';
+  | 'profile'
+  | 'knowledge-base'
+  | 'knowledge-article';
 
 export default function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -45,6 +49,7 @@ export default function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedScanId, setSelectedScanId] = useState<number | null>(null);
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
+  const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null);
 
   const handleLogin = (name: string) => {
     setFarmerName(name);
@@ -136,6 +141,11 @@ export default function App() {
   const handleSelectConsultation = (consultationId: number) => {
     setSelectedConsultationId(consultationId);
     setCurrentScreen('consultation-detail');
+  };
+
+  const handleSelectArticle = (articleId: number) => {
+    setSelectedArticleId(articleId);
+    setCurrentScreen('knowledge-article');
   };
 
   useEffect(() => {
@@ -235,6 +245,14 @@ export default function App() {
 
       {currentScreen === 'profile' && (
         <ProfileScreen onBack={handleBackToHome} onLogout={handleLogout} />
+      )}
+
+      {currentScreen === 'knowledge-base' && (
+        <KnowledgeBaseListScreen onBack={handleBackToHome} onSelect={handleSelectArticle} />
+      )}
+
+      {currentScreen === 'knowledge-article' && (
+        <KnowledgeArticleScreen articleId={selectedArticleId} onBack={() => setCurrentScreen('knowledge-base')} />
       )}
     </div>
   );
