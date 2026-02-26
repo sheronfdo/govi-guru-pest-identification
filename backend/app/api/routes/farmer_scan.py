@@ -1,8 +1,6 @@
-import random
 from datetime import datetime
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from app.core.deps import require_role, get_current_user
 from app.core.storage import upload_image, get_object_url
@@ -11,6 +9,7 @@ from app.models.pest import Pest
 from app.models.scan import Scan
 from app.schemas.scan import ScanResponse, PestDetectionResult, ScanHistoryResponse, ScanHistoryItem, ScanDetailResponse
 from app.services.scan_service import ScanService
+from app.services.pest_classifier import predict_image_bytes
 
 router = APIRouter(prefix="/farmer", tags=["farmer-scan"])
 
@@ -32,16 +31,20 @@ async def scan_pest(
     object_name = upload_image(image.filename, content, image.content_type)
     scan_image_url = get_object_url(object_name)
 
+    prediction = predict_image_bytes(content)
+
     pest = (
         db.query(Pest)
-        .filter(Pest.status == "active")
-        .order_by(func.rand())
+        .filter(Pest.status == "active", Pest.name_en == prediction.class_name)
         .first()
     )
     if not pest:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No pests available")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Predicted pest '{prediction.class_name}' not found in database",
+        )
 
-    confidence = round(random.uniform(0.7, 0.98), 2)
+    confidence = round(prediction.confidence, 2)
     scan = Scan(
         farmer_id=current_user.id,
         pest_id=pest.id,
