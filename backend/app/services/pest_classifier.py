@@ -44,12 +44,21 @@ def _load_model_and_classes() -> Tuple[tf.keras.Model, list[str]]:
     return model, class_names
 
 
+def _needs_preprocess_input(model: tf.keras.Model) -> bool:
+    for layer in model.layers:
+        if isinstance(layer, (tf.keras.layers.Rescaling, tf.keras.layers.Normalization)):
+            return False
+    return True
+
+
 def predict_image_bytes(image_bytes: bytes) -> Prediction:
     model, class_names = _load_model_and_classes()
 
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     image = image.resize((224, 224))
-    array = np.asarray(image, dtype=np.float32) / 255.0
+    array = np.asarray(image, dtype=np.float32)
+    if _needs_preprocess_input(model):
+        array = tf.keras.applications.mobilenet_v2.preprocess_input(array)
     array = np.expand_dims(array, axis=0)
 
     preds = model.predict(array, verbose=0)[0]
