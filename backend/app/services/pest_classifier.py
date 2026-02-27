@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
-from PIL import Image
 import tensorflow as tf
 
 
@@ -44,26 +43,43 @@ def _load_model_and_classes() -> Tuple[tf.keras.Model, list[str]]:
     return model, class_names
 
 
+def _has_rescaling_or_normalization(layer: tf.keras.layers.Layer) -> bool:
+    if isinstance(layer, (tf.keras.layers.Rescaling, tf.keras.layers.Normalization)):
+        return True
+    if hasattr(layer, "layers"):
+        for sub in layer.layers:
+            if _has_rescaling_or_normalization(sub):
+                return True
+    return False
+
+
 def _needs_preprocess_input(model: tf.keras.Model) -> bool:
-    for layer in model.layers:
-        if isinstance(layer, (tf.keras.layers.Rescaling, tf.keras.layers.Normalization)):
-            return False
-    return True
+    return not _has_rescaling_or_normalization(model)
 
 
 def predict_image_bytes(image_bytes: bytes) -> Prediction:
     model, class_names = _load_model_and_classes()
 
-    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    image = image.resize((224, 224))
-    array = np.asarray(image, dtype=np.float32)
+    image = tf.io.decode_image(image_bytes, channels=3, expand_animations=False)
+    image = tf.image.resize(image, _get_input_size(model))
+    image = tf.cast(image, tf.float32)
     if _needs_preprocess_input(model):
-        array = tf.keras.applications.mobilenet_v2.preprocess_input(array)
-    array = np.expand_dims(array, axis=0)
+        image = tf.keras.applications.mobilenet_v2.preprocess_input(image)
+    batch = tf.expand_dims(image, axis=0)
 
-    preds = model.predict(array, verbose=0)[0]
+    preds = model.predict(batch, verbose=0)[0]
     preds = tf.nn.softmax(preds).numpy()
     idx = int(np.argmax(preds))
     confidence = float(preds[idx])
     class_name = class_names[idx] if idx < len(class_names) else "Unknown"
     return Prediction(class_name=class_name, confidence=confidence)
+
+
+def _get_input_size(model: tf.keras.Model) -> tuple[int, int]:
+    try:
+        _, height, width, _ = model.input_shape
+        if height and width:
+            return int(height), int(width)
+    except Exception:
+        pass
+    return 224, 224
