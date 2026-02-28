@@ -1,0 +1,82 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: goviguru
+      MYSQL_USER: goviguru
+      MYSQL_PASSWORD: goviguru
+      MYSQL_ROOT_PASSWORD: goviguru_root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: goviguru
+      MINIO_ROOT_PASSWORD: goviguru123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      ENVIRONMENT: development
+      JWT_SECRET_KEY: change-me
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: goviguru
+      MYSQL_PASSWORD: goviguru
+      MYSQL_DB: goviguru
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: goviguru
+      MINIO_SECRET_KEY: goviguru123
+      MINIO_BUCKET: govi-guru
+      MINIO_SECURE: "False"
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./admin
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+  farmer:
+    build:
+      context: ./farmer
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+
+  agriculture:
+    build:
+      context: ./agriculture
+    ports:
+      - "5175:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  minio_data:
