@@ -31,16 +31,21 @@ export default function Login({ onLogin }: LoginProps) {
   });
   const [signupError, setSignupError] = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
+  const isValidPhone = (value: string) => /^[+\d\s()-]{7,20}$/.test(value);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginForm.email || !loginForm.password) return;
+    const identifier = loginForm.email.trim();
+    if (!identifier || !loginForm.password) {
+      setLoginError('Please enter your login and password');
+      return;
+    }
     setLoginError('');
     setLoginLoading(true);
     fetch(`${apiBase}/auth/officer/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: loginForm.email, password: loginForm.password, role: 'officer' }),
+      body: JSON.stringify({ identifier, password: loginForm.password, role: 'officer' }),
     })
       .then((res) => {
         if (!res.ok) throw new Error('Invalid credentials');
@@ -64,26 +69,39 @@ export default function Login({ onLogin }: LoginProps) {
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    const fullName = signupForm.fullName.trim();
+    const officerId = signupForm.officerId.trim();
+    const region = signupForm.region.trim();
+    const phone = signupForm.phone.trim();
+    const password = signupForm.password;
     setSignupError('');
-    if (signupForm.password !== signupForm.confirmPassword) {
+    if (!fullName || !officerId || !region || !phone || !password || !signupForm.confirmPassword) {
+      setSignupError('Please fill in all required fields');
+      return;
+    }
+    if (!isValidPhone(phone)) {
+      setSignupError('Please enter a valid phone number');
+      return;
+    }
+    if (password !== signupForm.confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
-    if (signupForm.password.length < 6) {
+    if (password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
     }
-    if (signupForm.fullName && signupForm.officerId && signupForm.region) {
+    if (fullName && officerId && region) {
       setSignupLoading(true);
       fetch(`${apiBase}/auth/officers/request-access`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: signupForm.fullName,
-          officer_id: signupForm.officerId,
-          region: signupForm.region,
-          phone: signupForm.phone,
-          password: signupForm.password,
+          full_name: fullName,
+          officer_id: officerId,
+          region,
+          phone,
+          password,
         }),
       })
         .then((res) => {

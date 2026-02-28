@@ -105,13 +105,18 @@ export default function ConsultationInbox() {
   }, [selectedConversation]);
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim() || !selectedConversation) return;
+    const message = messageInput.trim();
+    if (!message || !selectedConversation) return;
+    if (message.length > 5000) {
+      toast.error('Message is too long');
+      return;
+    }
     const token = localStorage.getItem('gg_token');
     if (!token) return;
 
     try {
       const form = new FormData();
-      form.append('message', messageInput.trim());
+      form.append('message', message);
       const res = await fetch(`${apiBase}/officer/consultations/${selectedConversation}/messages`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },

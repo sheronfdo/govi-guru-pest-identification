@@ -16,6 +16,8 @@ import {
 } from '../../shared/ui/select';
 
 export function UserManagement() {
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const isValidPhone = (value: string) => /^[+\d\s()-]{7,20}$/.test(value);
   const [filter, setFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newUserRole, setNewUserRole] = useState('');
@@ -91,11 +93,36 @@ export function UserManagement() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
-    if (!newUserRole || !formData.email) {
-      setError('Role and email are required');
+    const firstName = formData.firstName.trim();
+    const lastName = formData.lastName.trim();
+    const fullName = `${firstName} ${lastName}`.trim();
+    const email = formData.email.trim().toLowerCase();
+    const phone = formData.phone.trim();
+    const region = formData.region.trim();
+    const officerId = formData.officerId.trim();
+    const password = formData.password || 'ChangeMe123!';
+
+    if (!newUserRole || !email || !fullName || !region) {
+      setError('Role, full name, email, and region are required');
       return;
     }
-    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    if (phone && !isValidPhone(phone)) {
+      setError('Please enter a valid phone number');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    if (newUserRole === 'officer' && !officerId) {
+      setError('Officer ID is required for officer users');
+      return;
+    }
+    setError('');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users`, {
         method: 'POST',
@@ -104,13 +131,13 @@ export function UserManagement() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          email: formData.email,
-          phone: formData.phone || null,
+          email,
+          phone: phone || null,
           full_name: fullName || null,
           role: newUserRole,
-          region: formData.region || null,
-          officer_id: formData.officerId || null,
-          password: formData.password || 'ChangeMe123!',
+          region: region || null,
+          officer_id: officerId || null,
+          password,
         }),
       });
       if (!res.ok) throw new Error('Failed to create user');
@@ -180,17 +207,37 @@ export function UserManagement() {
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token || !editUser) return;
+    const email = (editUser.email || '').trim().toLowerCase();
+    const phone = (editUser.phone || '').trim();
+    const fullName = (editUser.full_name || '').trim();
+    const region = (editUser.region || '').trim();
+    const officerId = (editUser.officer_id || '').trim();
+    if (!email || !isValidEmail(email)) {
+      setError('Please enter a valid email address');
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    if (phone && !isValidPhone(phone)) {
+      setError('Please enter a valid phone number');
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+    if ((editUser.role || '') === 'officer' && !officerId) {
+      setError('Officer ID is required for officer users');
+      toast.error('Officer ID is required for officer users');
+      return;
+    }
     try {
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users/${editUser.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          full_name: editUser.full_name || null,
-          email: editUser.email,
-          phone: editUser.phone || null,
+          full_name: fullName || null,
+          email,
+          phone: phone || null,
           role: editUser.role,
-          region: editUser.region || null,
-          officer_id: editUser.officer_id || null,
+          region: region || null,
+          officer_id: officerId || null,
         }),
       });
       if (!res.ok) throw new Error('Failed to update user');

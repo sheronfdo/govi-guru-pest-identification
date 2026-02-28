@@ -102,8 +102,13 @@ export default function VerificationWorkbench() {
 
   const handleVerify = async (status: 'verified' | 'corrected') => {
     if (!currentItem) return;
-    if (status === 'corrected' && !expertNote.trim()) {
+    const note = expertNote.trim();
+    if (status === 'corrected' && !note) {
       toast.error('Please provide correction details');
+      return;
+    }
+    if (note.length > 5000) {
+      toast.error('Expert note is too long');
       return;
     }
     const token = localStorage.getItem('gg_token');
@@ -111,7 +116,7 @@ export default function VerificationWorkbench() {
     try {
       const form = new FormData();
       form.append('status', status);
-      if (expertNote.trim()) form.append('note', expertNote.trim());
+      if (note) form.append('note', note);
       const res = await fetch(`${apiBase}/officer/consultations/${currentItem.id}/verify`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },

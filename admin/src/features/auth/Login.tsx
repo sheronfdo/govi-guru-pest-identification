@@ -19,13 +19,18 @@ export function Login({ onLogin }: LoginProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const identifier = email.trim();
+    if (!identifier || !password) {
+      setError('Please enter email and password');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: email, password, role: 'admin' }),
+        body: JSON.stringify({ identifier, password, role: 'admin' }),
       });
       if (!res.ok) {
         throw new Error('Invalid credentials');

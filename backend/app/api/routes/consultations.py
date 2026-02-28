@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, require_role
@@ -23,9 +23,45 @@ from app.services.consultation_service import ConsultationService
 
 router = APIRouter(tags=["consultations"])
 
+MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+
 
 def _format_dt(dt: Optional[datetime]) -> str:
     return dt.strftime("%d %b %Y %H:%M") if dt else datetime.utcnow().strftime("%d %b %Y %H:%M")
+
+
+def _normalize_message(raw: str, *, min_length: int = 1) -> str:
+    message = raw.strip()
+    if len(message) < min_length:
+        if min_length <= 1:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Message required")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Message must be at least {min_length} characters",
+        )
+    if len(message) > 5000:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Message is too long",
+        )
+    return message
+
+
+async def _upload_consultation_attachment(file: UploadFile) -> str:
+    content_type = (file.content_type or "").lower()
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Attachment must be a JPG, PNG, or WEBP image",
+        )
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Attachment is empty")
+    if len(content) > MAX_ATTACHMENT_BYTES:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Attachment exceeds 5MB")
+    object_name = upload_image(file.filename, content, file.content_type)
+    return get_object_url(object_name)
 
 
 def _get_scan_info(db: Session, scan_id: Optional[int]) -> dict:
@@ -113,8 +149,7 @@ async def create_consultation(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    if len(message.strip()) < 20:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Message too short")
+    message_body = _normalize_message(message, min_length=20)
 
     scan = None
     if scan_id:
@@ -128,9 +163,7 @@ async def create_consultation(
 
     attachment_url = None
     if attachment:
-        content = await attachment.read()
-        object_name = upload_image(attachment.filename, content, attachment.content_type)
-        attachment_url = get_object_url(object_name)
+        attachment_url = await _upload_consultation_attachment(attachment)
 
     consultation = Consultation(
         farmer_id=current_user.id,
@@ -144,7 +177,7 @@ async def create_consultation(
         consultation_id=consultation.id,
         sender_id=current_user.id,
         sender_role="farmer",
-        body=message.strip(),
+        body=message_body,
         attachment_url=attachment_url,
     )
     db.add(msg)
@@ -219,23 +252,20 @@ async def farmer_add_message(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    if not message.strip():
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Message required")
+    message_body = _normalize_message(message)
     consultation = ConsultationService.get(db, consultation_id)
     if not consultation or consultation.farmer_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Consultation not found")
 
     attachment_url = None
     if attachment:
-        content = await attachment.read()
-        object_name = upload_image(attachment.filename, content, attachment.content_type)
-        attachment_url = get_object_url(object_name)
+        attachment_url = await _upload_consultation_attachment(attachment)
 
     msg = ConsultationMessage(
         consultation_id=consultation.id,
         sender_id=current_user.id,
         sender_role="farmer",
-        body=message.strip(),
+        body=message_body,
         attachment_url=attachment_url,
     )
     db.add(msg)
@@ -253,7 +283,7 @@ async def farmer_add_message(
     dependencies=[Depends(require_role("officer"))],
 )
 def list_officer_consultations(
-    status_filter: Optional[str] = None,
+    status_filter: Optional[Literal["pending", "replied", "verified", "corrected", "closed"]] = Query(default=None),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -334,23 +364,20 @@ async def officer_add_message(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    if not message.strip():
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Message required")
+    message_body = _normalize_message(message)
     consultation = ConsultationService.get(db, consultation_id)
     if not consultation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Consultation not found")
 
     attachment_url = None
     if attachment:
-        content = await attachment.read()
-        object_name = upload_image(attachment.filename, content, attachment.content_type)
-        attachment_url = get_object_url(object_name)
+        attachment_url = await _upload_consultation_attachment(attachment)
 
     msg = ConsultationMessage(
         consultation_id=consultation.id,
         sender_id=current_user.id,
         sender_role="officer",
-        body=message.strip(),
+        body=message_body,
         attachment_url=attachment_url,
     )
     db.add(msg)
@@ -409,6 +436,8 @@ def verify_consultation(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Correction note required")
 
     body = (note or "").strip()
+    if body and len(body) > 5000:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Note is too long")
     if not body:
         body = "Verification confirmed by agriculture officer."
 

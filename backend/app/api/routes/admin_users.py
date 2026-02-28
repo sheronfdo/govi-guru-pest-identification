@@ -1,5 +1,6 @@
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Literal, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import require_role
@@ -13,10 +14,10 @@ router = APIRouter(prefix="/admin/users", tags=["admin-users"])
 
 @router.get("", response_model=PaginatedResponse[UserOut], dependencies=[Depends(require_role("admin"))])
 def list_users(
-    role: Optional[str] = None,
-    q: Optional[str] = None,
-    page: int = 1,
-    limit: int = 20,
+    role: Optional[Literal["admin", "officer", "farmer"]] = None,
+    q: Optional[str] = Query(default=None, max_length=100),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     items, total = UserService.list(db, role, q, page, limit)

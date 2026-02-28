@@ -16,6 +16,9 @@ import {
 } from '../../shared/ui/select';
 
 export function PestDatabase() {
+  const allowedImageTypes = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+  const maxImageSize = 5 * 1024 * 1024;
+  const allowedCropStages = new Set(['seedling', 'vegetative', 'reproductive', 'ripening']);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editPest, setEditPest] = useState<any | null>(null);
   const [viewPest, setViewPest] = useState<any | null>(null);
@@ -90,14 +93,43 @@ export function PestDatabase() {
   const handleCreatePest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
+    const nameEnglish = formData.nameEnglish.trim();
+    const nameSinhala = formData.nameSinhala.trim();
+    const nameTamil = formData.nameTamil.trim();
+    const cropStage = formData.cropStage.trim();
+    const chemical = formData.chemical.trim();
+    const kem = formData.kem.trim();
+    if (!nameEnglish) {
+      setError('English pest name is required');
+      toast.error('English pest name is required');
+      return;
+    }
+    if (cropStage && !allowedCropStages.has(cropStage)) {
+      setError('Invalid crop stage selected');
+      toast.error('Invalid crop stage selected');
+      return;
+    }
+    if (formData.imageFile) {
+      if (!allowedImageTypes.has(formData.imageFile.type)) {
+        setError('Image must be JPG, PNG, or WEBP');
+        toast.error('Image must be JPG, PNG, or WEBP');
+        return;
+      }
+      if (formData.imageFile.size > maxImageSize) {
+        setError('Image must be 5MB or smaller');
+        toast.error('Image must be 5MB or smaller');
+        return;
+      }
+    }
+    setError('');
     try {
       const form = new FormData();
-      form.append('name_en', formData.nameEnglish);
-      form.append('name_si', formData.nameSinhala);
-      form.append('name_ta', formData.nameTamil);
-      if (formData.cropStage) form.append('crop_stage', formData.cropStage);
-      if (formData.chemical) form.append('chemical_methods', formData.chemical);
-      if (formData.kem) form.append('kem_methods', formData.kem);
+      form.append('name_en', nameEnglish);
+      if (nameSinhala) form.append('name_si', nameSinhala);
+      if (nameTamil) form.append('name_ta', nameTamil);
+      if (cropStage) form.append('crop_stage', cropStage);
+      if (chemical) form.append('chemical_methods', chemical);
+      if (kem) form.append('kem_methods', kem);
       if (formData.imageFile) form.append('image', formData.imageFile);
 
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/pests`, {
@@ -142,11 +174,44 @@ export function PestDatabase() {
   const handleUpdatePest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token || !editPest) return;
+    const nameEn = (editPest.name_en || '').trim();
+    if (!nameEn) {
+      setError('English pest name is required');
+      toast.error('English pest name is required');
+      return;
+    }
+    if (editPest.crop_stage && !allowedCropStages.has(editPest.crop_stage)) {
+      setError('Invalid crop stage selected');
+      toast.error('Invalid crop stage selected');
+      return;
+    }
+    if (editImageFile) {
+      if (!allowedImageTypes.has(editImageFile.type)) {
+        setError('Image must be JPG, PNG, or WEBP');
+        toast.error('Image must be JPG, PNG, or WEBP');
+        return;
+      }
+      if (editImageFile.size > maxImageSize) {
+        setError('Image must be 5MB or smaller');
+        toast.error('Image must be 5MB or smaller');
+        return;
+      }
+    }
+    const payload = {
+      ...editPest,
+      name_en: nameEn,
+      name_si: (editPest.name_si || '').trim() || null,
+      name_ta: (editPest.name_ta || '').trim() || null,
+      crop_stage: (editPest.crop_stage || '').trim() || null,
+      chemical_methods: (editPest.chemical_methods || '').trim() || null,
+      kem_methods: (editPest.kem_methods || '').trim() || null,
+      image: undefined,
+    };
     try {
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/pests/${editPest.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(editPest),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Failed to update pest');
       if (editImageFile) {
@@ -261,7 +326,20 @@ export function PestDatabase() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      if (file) {
+                        if (!allowedImageTypes.has(file.type)) {
+                          toast.error('Image must be JPG, PNG, or WEBP');
+                          return;
+                        }
+                        if (file.size > maxImageSize) {
+                          toast.error('Image must be 5MB or smaller');
+                          return;
+                        }
+                      }
+                      setFormData({ ...formData, imageFile: file });
+                    }}
                   />
                 </label>
                 {formData.imageFile && (
@@ -480,7 +558,20 @@ export function PestDatabase() {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => setEditImageFile(e.target.files?.[0] || null)}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        if (file) {
+                          if (!allowedImageTypes.has(file.type)) {
+                            toast.error('Image must be JPG, PNG, or WEBP');
+                            return;
+                          }
+                          if (file.size > maxImageSize) {
+                            toast.error('Image must be 5MB or smaller');
+                            return;
+                          }
+                        }
+                        setEditImageFile(file);
+                      }}
                     />
                   </label>
                 </div>

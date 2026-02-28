@@ -32,6 +32,8 @@ export default function KnowledgeBaseEditor() {
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const maxImageSize = 5 * 1024 * 1024;
+  const allowedImageTypes = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
   const loadArticles = async () => {
     const token = localStorage.getItem('gg_token');
@@ -62,16 +64,41 @@ export default function KnowledgeBaseEditor() {
   };
 
   const submitArticle = async (statusValue: 'published' | 'draft') => {
-    if (!formData.title || !formData.category || !formData.content) {
+    const title = formData.title.trim();
+    const category = formData.category.trim();
+    const content = formData.content.trim();
+    if (!title || !category || !content) {
       toast.error('Please fill in all required fields');
       return;
+    }
+    if (title.length > 255) {
+      toast.error('Title is too long');
+      return;
+    }
+    if (content.length < 20) {
+      toast.error('Content must be at least 20 characters');
+      return;
+    }
+    if (content.length > 20000) {
+      toast.error('Content is too long');
+      return;
+    }
+    if (formData.image) {
+      if (!allowedImageTypes.has(formData.image.type)) {
+        toast.error('Image must be JPG, PNG, or WEBP');
+        return;
+      }
+      if (formData.image.size > maxImageSize) {
+        toast.error('Image must be 5MB or smaller');
+        return;
+      }
     }
     const token = localStorage.getItem('gg_token');
     if (!token) return;
     const form = new FormData();
-    form.append('title', formData.title);
-    form.append('category', formData.category);
-    form.append('content', formData.content);
+    form.append('title', title);
+    form.append('category', category);
+    form.append('content', content);
     form.append('status_value', statusValue);
     if (formData.image) form.append('image', formData.image);
 
@@ -121,6 +148,14 @@ export default function KnowledgeBaseEditor() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!allowedImageTypes.has(file.type)) {
+        toast.error('Image must be JPG, PNG, or WEBP');
+        return;
+      }
+      if (file.size > maxImageSize) {
+        toast.error('Image must be 5MB or smaller');
+        return;
+      }
       setFormData({ ...formData, image: file });
       toast.success('Image uploaded');
     }

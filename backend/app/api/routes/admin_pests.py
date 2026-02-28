@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import require_role
@@ -12,12 +13,52 @@ from app.services.pest_service import PestService
 
 router = APIRouter(prefix="/admin/pests", tags=["admin-pests"])
 
+ALLOWED_CROP_STAGES = {"seedling", "vegetative", "reproductive", "ripening"}
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+
+def _clean_optional_text(value: Optional[str], *, max_length: int) -> Optional[str]:
+    if value is None:
+        return None
+    normalized = value.strip()
+    if not normalized:
+        return None
+    if len(normalized) > max_length:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Text is too long")
+    return normalized
+
+
+def _clean_required_text(value: str, *, max_length: int, field: str) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"{field} is required")
+    if len(normalized) > max_length:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"{field} is too long")
+    return normalized
+
+
+async def _upload_pest_image(image: UploadFile) -> str:
+    content_type = (image.content_type or "").lower()
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Image must be a JPG, PNG, or WEBP file",
+        )
+    content = await image.read()
+    if not content:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Image is empty")
+    if len(content) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Image exceeds 5MB")
+    object_name = upload_image(image.filename, content, image.content_type)
+    return get_object_url(object_name)
+
 
 @router.get("", response_model=PaginatedResponse[PestOut], dependencies=[Depends(require_role("admin"))])
 def list_pests(
-    q: Optional[str] = None,
-    page: int = 1,
-    limit: int = 20,
+    q: Optional[str] = Query(default=None, max_length=100),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     items, total = PestService.list(db, q, page, limit)
@@ -35,19 +76,26 @@ async def create_pest(
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
+    name_en_value = _clean_required_text(name_en, max_length=255, field="English name")
+    name_si_value = _clean_optional_text(name_si, max_length=255)
+    name_ta_value = _clean_optional_text(name_ta, max_length=255)
+    crop_stage_value = _clean_optional_text(crop_stage, max_length=64)
+    chemical_methods_value = _clean_optional_text(chemical_methods, max_length=5000)
+    kem_methods_value = _clean_optional_text(kem_methods, max_length=5000)
+    if crop_stage_value and crop_stage_value not in ALLOWED_CROP_STAGES:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid crop stage")
+
     image_path = None
     if image is not None:
-        content = await image.read()
-        object_name = upload_image(image.filename, content, image.content_type)
-        image_path = get_object_url(object_name)
+        image_path = await _upload_pest_image(image)
 
     pest = Pest(
-        name_en=name_en,
-        name_si=name_si,
-        name_ta=name_ta,
-        crop_stage=crop_stage,
-        chemical_methods=chemical_methods,
-        kem_methods=kem_methods,
+        name_en=name_en_value,
+        name_si=name_si_value,
+        name_ta=name_ta_value,
+        crop_stage=crop_stage_value,
+        chemical_methods=chemical_methods_value,
+        kem_methods=kem_methods_value,
         image_path=image_path,
     )
     return PestService.create(db, pest)

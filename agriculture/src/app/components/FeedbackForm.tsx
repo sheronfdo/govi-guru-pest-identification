@@ -15,8 +15,18 @@ export default function FeedbackForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subject.trim() || !message.trim()) {
+    const subjectValue = subject.trim();
+    const messageValue = message.trim();
+    if (!subjectValue || !messageValue) {
       toast.error('Please fill in subject and message');
+      return;
+    }
+    if (subjectValue.length < 3) {
+      toast.error('Subject must be at least 3 characters');
+      return;
+    }
+    if (messageValue.length < 10) {
+      toast.error('Message must be at least 10 characters');
       return;
     }
     const token = localStorage.getItem('gg_token');
@@ -29,7 +39,7 @@ export default function FeedbackForm() {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ subject: subject.trim(), message: message.trim(), priority }),
+        body: JSON.stringify({ subject: subjectValue, message: messageValue, priority }),
       });
       if (!res.ok) throw new Error('Failed to submit feedback');
       toast.success('Feedback submitted');

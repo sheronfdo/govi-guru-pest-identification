@@ -31,6 +31,8 @@ export function ExpertScreen({
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const maxImageSize = 5 * 1024 * 1024;
+  const allowedImageTypes = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
   useEffect(() => {
     if (!scanContext) return;
@@ -54,7 +56,25 @@ export function ExpertScreen({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim().length < 20) return;
+    const messageValue = message.trim();
+    if (messageValue.length < 20) {
+      setError('Please enter at least 20 characters');
+      return;
+    }
+    if (messageValue.length > 5000) {
+      setError('Message is too long');
+      return;
+    }
+    if (attachmentFile) {
+      if (!allowedImageTypes.has(attachmentFile.type)) {
+        setError('Attachment must be a JPG, PNG, or WEBP image');
+        return;
+      }
+      if (attachmentFile.size > maxImageSize) {
+        setError('Attachment must be 5MB or smaller');
+        return;
+      }
+    }
     const token = localStorage.getItem('gg_token');
     if (!token) {
       onBack();
@@ -65,7 +85,7 @@ export function ExpertScreen({
     setError('');
     try {
       const form = new FormData();
-      form.append('message', message.trim());
+      form.append('message', messageValue);
       if (scanId) form.append('scan_id', String(scanId));
       if (attachmentFile) form.append('attachment', attachmentFile);
 
@@ -234,6 +254,19 @@ export function ExpertScreen({
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0] || null;
+              if (file) {
+                if (!allowedImageTypes.has(file.type)) {
+                  setError('Attachment must be a JPG, PNG, or WEBP image');
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                  return;
+                }
+                if (file.size > maxImageSize) {
+                  setError('Attachment must be 5MB or smaller');
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                  return;
+                }
+              }
+              setError('');
               setAttachmentFile(file);
               if (fileInputRef.current) fileInputRef.current.value = '';
             }}

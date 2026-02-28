@@ -22,12 +22,34 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const isValidPhone = (value: string) => /^[+\d\s()-]{7,20}$/.test(value);
+
   const handleRegister = async () => {
-    if (!registerData.fullName || !registerData.email || !registerData.password || !registerData.region) {
+    const fullName = registerData.fullName.trim();
+    const email = registerData.email.trim();
+    const region = registerData.region.trim();
+    const phone = registerData.phone.trim();
+    const password = registerData.password;
+    const confirmPassword = registerData.confirmPassword;
+
+    if (!fullName || !email || !password || !region) {
       setError('Please fill in all required fields');
       return;
     }
-    if (registerData.password !== registerData.confirmPassword) {
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    if (phone && !isValidPhone(phone)) {
+      setError('Please enter a valid phone number');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
@@ -38,11 +60,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: registerData.email,
-          phone: registerData.phone || null,
-          password: registerData.password,
-          full_name: registerData.fullName,
-          region: registerData.region,
+          email,
+          phone: phone || null,
+          password,
+          full_name: fullName,
+          region,
         }),
       });
       if (!res.ok) throw new Error('Registration failed');
@@ -50,12 +72,12 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       const loginRes = await fetch(`${apiBase}/auth/farmer/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: registerData.email, password: registerData.password, role: 'farmer' }),
+        body: JSON.stringify({ identifier: email, password, role: 'farmer' }),
       });
       if (!loginRes.ok) throw new Error('Login failed');
       const data = await loginRes.json();
       localStorage.setItem('gg_token', data.access_token);
-      onLogin(registerData.fullName);
+      onLogin(fullName);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -65,13 +87,18 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const identifier = loginPhone.trim();
+    if (!identifier || !loginPassword) {
+      setError('Please enter email/phone and password');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
       const res = await fetch(`${apiBase}/auth/farmer/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: loginPhone, password: loginPassword, role: 'farmer' }),
+        body: JSON.stringify({ identifier, password: loginPassword, role: 'farmer' }),
       });
       if (!res.ok) throw new Error('Invalid credentials');
       const data = await res.json();

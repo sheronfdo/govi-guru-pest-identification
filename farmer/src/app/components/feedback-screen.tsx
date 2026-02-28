@@ -18,8 +18,18 @@ export function FeedbackScreen({ onBack }: FeedbackScreenProps) {
     e.preventDefault();
     setError('');
     setSuccess('');
-    if (!subject.trim() || !message.trim()) {
+    const subjectValue = subject.trim();
+    const messageValue = message.trim();
+    if (!subjectValue || !messageValue) {
       setError('Please fill in subject and message');
+      return;
+    }
+    if (subjectValue.length < 3) {
+      setError('Subject must be at least 3 characters');
+      return;
+    }
+    if (messageValue.length < 10) {
+      setError('Message must be at least 10 characters');
       return;
     }
     const token = localStorage.getItem('gg_token');
@@ -33,8 +43,8 @@ export function FeedbackScreen({ onBack }: FeedbackScreenProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          subject: subject.trim(),
-          message: message.trim(),
+          subject: subjectValue,
+          message: messageValue,
           priority,
         }),
       });

@@ -35,6 +35,8 @@ export function ConsultationDetailScreen({ consultationId, onBack }: Consultatio
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const maxImageSize = 5 * 1024 * 1024;
+  const allowedImageTypes = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
   useEffect(() => {
     if (!attachmentFile) {
@@ -65,13 +67,29 @@ export function ConsultationDetailScreen({ consultationId, onBack }: Consultatio
   }, [consultationId]);
 
   const handleSend = async () => {
-    if (!consultationId || !message.trim()) return;
+    const messageValue = message.trim();
+    if (!consultationId || !messageValue) return;
+    if (messageValue.length > 5000) {
+      setError('Message is too long');
+      return;
+    }
+    if (attachmentFile) {
+      if (!allowedImageTypes.has(attachmentFile.type)) {
+        setError('Attachment must be a JPG, PNG, or WEBP image');
+        return;
+      }
+      if (attachmentFile.size > maxImageSize) {
+        setError('Attachment must be 5MB or smaller');
+        return;
+      }
+    }
     const token = localStorage.getItem('gg_token');
     if (!token) return;
     setSending(true);
+    setError('');
     try {
       const form = new FormData();
-      form.append('message', message.trim());
+      form.append('message', messageValue);
       if (attachmentFile) form.append('attachment', attachmentFile);
       const res = await fetch(`${apiBase}/farmer/consultations/${consultationId}/messages`, {
         method: 'POST',
@@ -195,6 +213,19 @@ export function ConsultationDetailScreen({ consultationId, onBack }: Consultatio
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0] || null;
+                  if (file) {
+                    if (!allowedImageTypes.has(file.type)) {
+                      setError('Attachment must be a JPG, PNG, or WEBP image');
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                      return;
+                    }
+                    if (file.size > maxImageSize) {
+                      setError('Attachment must be 5MB or smaller');
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                      return;
+                    }
+                  }
+                  setError('');
                   setAttachmentFile(file);
                   if (fileInputRef.current) fileInputRef.current.value = '';
                 }}

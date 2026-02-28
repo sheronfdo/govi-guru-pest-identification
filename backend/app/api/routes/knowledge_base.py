@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -17,9 +17,41 @@ from app.schemas.knowledge_base import (
 
 router = APIRouter(tags=["knowledge-base"])
 
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+ALLOWED_ARTICLE_STATUS = {"draft", "published"}
+
 
 def _format_dt(dt: Optional[datetime]) -> str:
     return dt.strftime("%d %b %Y %H:%M") if dt else datetime.utcnow().strftime("%d %b %Y %H:%M")
+
+
+def _clean_required_text(value: str, field_name: str, max_length: int) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"{field_name} is required")
+    if len(normalized) > max_length:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"{field_name} is too long",
+        )
+    return normalized
+
+
+async def _upload_cover_image(image: UploadFile) -> str:
+    content_type = (image.content_type or "").lower()
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Image must be a JPG, PNG, or WEBP file",
+        )
+    content_bytes = await image.read()
+    if not content_bytes:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Image is empty")
+    if len(content_bytes) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Image exceeds 5MB")
+    object_name = upload_image(image.filename, content_bytes, image.content_type)
+    return get_object_url(object_name)
 
 
 def _to_summary(article: KnowledgeArticle) -> KnowledgeArticleSummary:
@@ -54,8 +86,8 @@ def _to_detail(article: KnowledgeArticle) -> KnowledgeArticleDetail:
     dependencies=[Depends(require_role("officer"))],
 )
 def list_articles_officer(
-    status_filter: Optional[str] = None,
-    q: Optional[str] = None,
+    status_filter: Optional[Literal["draft", "published"]] = None,
+    q: Optional[str] = Query(default=None, max_length=100),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -89,20 +121,21 @@ async def create_article(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    title_value = _clean_required_text(title, "Title", 255)
+    category_value = _clean_required_text(category, "Category", 128)
+    content_value = _clean_required_text(content, "Content", 20000)
     status_norm = status_value.strip().lower()
-    if status_norm not in {"draft", "published"}:
+    if status_norm not in ALLOWED_ARTICLE_STATUS:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid status")
 
     cover_url = None
     if image:
-        content_bytes = await image.read()
-        object_name = upload_image(image.filename, content_bytes, image.content_type)
-        cover_url = get_object_url(object_name)
+        cover_url = await _upload_cover_image(image)
 
     article = KnowledgeArticle(
-        title=title.strip(),
-        category=category.strip(),
-        content=content.strip(),
+        title=title_value,
+        category=category_value,
+        content=content_value,
         status=status_norm,
         cover_image_url=cover_url,
         author_id=current_user.id,
@@ -134,19 +167,17 @@ async def update_article(
 
     if status_value:
         status_norm = status_value.strip().lower()
-        if status_norm not in {"draft", "published"}:
+        if status_norm not in ALLOWED_ARTICLE_STATUS:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid status")
         article.status = status_norm
     if title is not None:
-        article.title = title.strip()
+        article.title = _clean_required_text(title, "Title", 255)
     if category is not None:
-        article.category = category.strip()
+        article.category = _clean_required_text(category, "Category", 128)
     if content is not None:
-        article.content = content.strip()
+        article.content = _clean_required_text(content, "Content", 20000)
     if image:
-        content_bytes = await image.read()
-        object_name = upload_image(image.filename, content_bytes, image.content_type)
-        article.cover_image_url = get_object_url(object_name)
+        article.cover_image_url = await _upload_cover_image(image)
 
     db.commit()
     db.refresh(article)
@@ -193,8 +224,8 @@ def delete_article_officer(
     dependencies=[Depends(require_role("farmer"))],
 )
 def list_articles_farmer(
-    q: Optional[str] = None,
-    category: Optional[str] = None,
+    q: Optional[str] = Query(default=None, max_length=100),
+    category: Optional[str] = Query(default=None, max_length=128),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -241,8 +272,8 @@ def article_detail_farmer(
     dependencies=[Depends(require_role("admin"))],
 )
 def list_articles_admin(
-    status_filter: Optional[str] = None,
-    q: Optional[str] = None,
+    status_filter: Optional[Literal["draft", "published"]] = None,
+    q: Optional[str] = Query(default=None, max_length=100),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):

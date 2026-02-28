@@ -16,7 +16,7 @@ from app.repositories.user_repo import (
 class AuthService:
     @staticmethod
     def authenticate(db: Session, identifier: str, password: str, role: str) -> Optional[User]:
-        user = get_user_by_identifier(db, identifier, role)
+        user = get_user_by_identifier(db, identifier.strip(), role)
         if not user:
             return None
         if not verify_password(password, user.hashed_password):
@@ -36,16 +36,21 @@ class AuthService:
         full_name: str | None,
         region: str | None,
     ) -> User:
-        if get_user_by_email(db, email):
+        email_value = email.strip().lower()
+        phone_value = phone.strip() if phone else None
+        full_name_value = full_name.strip() if full_name else None
+        region_value = region.strip() if region else None
+
+        if get_user_by_email(db, email_value):
             raise ValueError("Email already registered")
-        if phone and get_user_by_phone(db, phone):
+        if phone_value and get_user_by_phone(db, phone_value):
             raise ValueError("Phone number already registered")
         user = User(
-            email=email,
-            phone=phone,
+            email=email_value,
+            phone=phone_value,
             hashed_password=get_password_hash(password),
-            full_name=full_name,
-            region=region,
+            full_name=full_name_value,
+            region=region_value,
             role="farmer",
             status="active",
         )
@@ -55,17 +60,22 @@ class AuthService:
     def request_officer_access(db: Session, full_name: str, officer_id: str, region: str, phone: str, password: str) -> User:
         # In production, this should create a pending approval record.
         domain = settings.system_email_domain
-        if get_user_by_officer_id(db, officer_id):
+        full_name_value = full_name.strip()
+        officer_id_value = officer_id.strip()
+        region_value = region.strip()
+        phone_value = phone.strip()
+
+        if get_user_by_officer_id(db, officer_id_value):
             raise ValueError("Officer ID already registered")
-        if get_user_by_phone(db, phone):
+        if get_user_by_phone(db, phone_value):
             raise ValueError("Phone number already registered")
         user = User(
-            email=f"officer_{officer_id}@{domain}",
-            phone=phone,
+            email=f"officer_{officer_id_value}@{domain}",
+            phone=phone_value,
             hashed_password=get_password_hash(password),
-            full_name=full_name,
-            region=region,
-            officer_id=officer_id,
+            full_name=full_name_value,
+            region=region_value,
+            officer_id=officer_id_value,
             role="officer",
             status="active",
         )
