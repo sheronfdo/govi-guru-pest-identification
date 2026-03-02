@@ -9,6 +9,7 @@ import {
   LogOut,
   Leaf,
   BookOpen,
+  Phone,
 } from 'lucide-react';
 import { Login } from '../features/auth/Login';
 import { DashboardHome } from '../features/dashboard/DashboardHome';
@@ -18,6 +19,7 @@ import { Analytics } from '../features/analytics/Analytics';
 import { Feedback } from '../features/feedback/Feedback';
 import { Settings } from '../features/settings/Settings';
 import { KnowledgeBaseAdmin } from '../features/knowledge/KnowledgeBaseAdmin';
+import { ContactRequests } from '../features/contacts/ContactRequests';
 
 type Page =
   | 'dashboard'
@@ -26,6 +28,7 @@ type Page =
   | 'analytics'
   | 'knowledge'
   | 'feedback'
+  | 'contacts'
   | 'settings';
 
 export default function App() {
@@ -41,6 +44,7 @@ export default function App() {
     { id: 'analytics' as Page, label: 'Analytics', icon: BarChart3 },
     { id: 'knowledge' as Page, label: 'Knowledge Base', icon: BookOpen },
     { id: 'feedback' as Page, label: 'Feedback', icon: MessageSquare },
+    { id: 'contacts' as Page, label: 'Contact Requests', icon: Phone },
     { id: 'settings' as Page, label: 'Settings', icon: SettingsIcon },
   ];
 
@@ -68,6 +72,8 @@ export default function App() {
         return <KnowledgeBaseAdmin />;
       case 'feedback':
         return <Feedback />;
+      case 'contacts':
+        return <ContactRequests />;
       case 'settings':
         return <Settings />;
       default:
@@ -112,11 +118,10 @@ export default function App() {
                 <li key={item.id}>
                   <button
                     onClick={() => setCurrentPage(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
-                        ? 'text-white'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                      ? 'text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                     style={
                       isActive
                         ? { backgroundColor: '#2E7D32' }
