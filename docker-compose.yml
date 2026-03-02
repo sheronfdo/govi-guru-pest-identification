@@ -61,6 +61,12 @@ services:
     depends_on:
       - backend
 
+  website:
+    build:
+      context: ./website
+    ports:
+      - "5176:80"
+
   farmer:
     build:
       context: ./farmer
