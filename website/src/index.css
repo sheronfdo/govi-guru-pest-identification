@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-govi-50: #f0fdf4;
+  --color-govi-100: #dcfce7;
+  --color-govi-200: #bbf7d0;
+  --color-govi-300: #86efac;
+  --color-govi-400: #4ade80;
+  --color-govi-500: #22c55e;
+  --color-govi-600: #16a34a;
+  --color-govi-700: #15803d;
+  --color-govi-800: #166534;
+  --color-govi-900: #14532d;
+  --color-govi-950: #052e16;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl dark:bg-slate-900/70 dark:border-slate-800/50;
+  }
+}
+
+html, body {
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased -scroll-m-0 scroll-smooth;
+}
