@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ShieldAlert, Bug, Search, Loader2, Leaf } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface Pest {
     id: number;
@@ -44,15 +45,24 @@ export default function PestDetailsPage() {
 
     return (
         <div className="py-16 px-6 max-w-7xl mx-auto">
-            <div className="text-center mb-16">
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mb-16"
+            >
                 <h1 className="text-4xl md:text-5xl font-bold mb-6 dark:text-white">Pest Knowledge Base</h1>
                 <p className="text-lg text-slate-500 dark:text-slate-400 max-w-3xl mx-auto">
                     Explore detailed information regarding common pests affecting paddy cultivation in Sri Lanka.
                     Discover both traditional eco-friendly methods and modern treatments.
                 </p>
-            </div>
+            </motion.div>
 
-            <div className="mb-12 max-w-2xl mx-auto relative">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="mb-12 max-w-2xl mx-auto relative"
+            >
                 <input
                     type="text"
                     placeholder="Search for a pest or symptom..."
@@ -61,7 +71,7 @@ export default function PestDetailsPage() {
                     className="w-full pl-12 pr-4 py-4 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-govi-500 transition-shadow"
                 />
                 <Search className="w-6 h-6 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-            </div>
+            </motion.div>
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20">
@@ -82,8 +92,15 @@ export default function PestDetailsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredPests.map((pest) => (
-                        <div key={pest.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl transition-shadow overflow-hidden flex flex-col">
+                    {filteredPests.map((pest, index) => (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-50px" }}
+                            transition={{ duration: 0.4, delay: (index % 6) * 0.1 }}
+                            key={pest.id}
+                            className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-xl transition-shadow overflow-hidden flex flex-col"
+                        >
                             {pest.image_path ? (
                                 <div className="w-full h-48 bg-slate-100 dark:bg-slate-800 relative">
                                     <img src={pest.image_path} alt={pest.name_en} className="w-full h-full object-cover" />
@@ -128,7 +145,7 @@ export default function PestDetailsPage() {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             )}

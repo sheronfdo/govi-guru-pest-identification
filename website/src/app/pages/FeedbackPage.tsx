@@ -64,9 +64,13 @@ export default function FeedbackPage() {
                 className="text-center mb-12"
             >
                 <h1 className="text-4xl font-bold mb-4 dark:text-white">Your Feedback Matters</h1>
-                <p className="text-slate-500 dark:text-slate-400">
+                <p className="text-slate-500 dark:text-slate-400 mb-10">
                     Help us improve "ගොවි ගුරු". Let us know if the AI identification was accurate or if you need additional tools for your paddy farming.
                 </p>
+                <div className="w-full h-64 md:h-80 rounded-3xl overflow-hidden shadow-2xl relative">
+                    <img src="/images/feedback_community.png" alt="Farmers reviewing feedback on tablet" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent"></div>
+                </div>
             </motion.div>
 
             <motion.div

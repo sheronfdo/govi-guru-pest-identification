@@ -6,9 +6,18 @@ export default function AboutUsPage() {
         <div className="py-16 px-6 max-w-7xl mx-auto">
             <div className="text-center mb-16">
                 <h1 className="text-4xl md:text-5xl font-bold mb-6 dark:text-white">About ගොවි ගුරු</h1>
-                <p className="text-lg text-slate-500 dark:text-slate-400 max-w-3xl mx-auto">
+                <p className="text-lg text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-10">
                     In Sri Lanka, paddy cultivation is a vital source of food and livelihood for a significant portion of the population. However, farmers face a wide range of problems, primarily the lack of knowledge and resources for identifying and managing pest infestations.
                 </p>
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="w-full max-w-5xl mx-auto h-[300px] md:h-[450px] rounded-3xl overflow-hidden shadow-2xl relative"
+                >
+                    <img src="/images/about_us_hero.png" alt="Sri Lankan Paddy Field at Sunrise" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
+                </motion.div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24">

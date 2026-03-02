@@ -419,22 +419,22 @@ export default function HomePage() {
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                             <Code className="w-10 h-10 text-govi-500 mb-4" />
                             <h4 className="font-bold mb-1 dark:text-white">Frontend</h4>
-                            <p className="text-xs text-slate-500">React, HTML, CSS, JS</p>
+                            <p className="text-xs text-slate-500">React, TypeScript, Tailwind</p>
                         </motion.div>
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                             <Server className="w-10 h-10 text-blue-500 mb-4" />
                             <h4 className="font-bold mb-1 dark:text-white">Backend</h4>
-                            <p className="text-xs text-slate-500">Python FastAPI & PHP</p>
+                            <p className="text-xs text-slate-500">Python FastAPI</p>
                         </motion.div>
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }} className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                             <MonitorSmartphone className="w-10 h-10 text-purple-500 mb-4" />
                             <h4 className="font-bold mb-1 dark:text-white">Machine Learning</h4>
-                            <p className="text-xs text-slate-500">TensorFlow</p>
+                            <p className="text-xs text-slate-500">TensorFlow Models</p>
                         </motion.div>
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 }} className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                             <Database className="w-10 h-10 text-emerald-500 mb-4" />
                             <h4 className="font-bold mb-1 dark:text-white">Database</h4>
-                            <p className="text-xs text-slate-500">MySQL Storage</p>
+                            <p className="text-xs text-slate-500">MySQL Database</p>
                         </motion.div>
                     </div>
                 </div>

@@ -62,9 +62,13 @@ export default function ContactUsPage() {
                 className="text-center mb-16"
             >
                 <h1 className="text-4xl font-bold mb-4 dark:text-white">Contact Our Experts</h1>
-                <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+                <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10">
                     Need assistance with the system or require direct agricultural advice? We are here to help you protect your harvest.
                 </p>
+                <div className="w-full max-w-5xl mx-auto h-64 md:h-[400px] rounded-3xl overflow-hidden shadow-2xl relative">
+                    <img src="/images/contact_support.png" alt="Govi Guru Customer Support Workspace" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent"></div>
+                </div>
             </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
