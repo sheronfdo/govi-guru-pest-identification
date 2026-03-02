@@ -98,13 +98,22 @@ export default function HomePage() {
             {/* 2. Problem / Solution / Deliverables */}
             <section className="py-24 px-6 bg-slate-50 dark:bg-slate-900 relative">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-center mb-16"
+                    >
                         <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white text-slate-900">Why Govi Guru?</h2>
                         <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Addressing the critical challenges in paddy farming with modern, easily accessible technology.</p>
-                    </div>
+                    </motion.div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 }}
                             whileHover={{ y: -10 }}
                             className="p-8 rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden relative group"
                         >
@@ -115,6 +124,10 @@ export default function HomePage() {
                         </motion.div>
 
                         <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
                             whileHover={{ y: -10 }}
                             className="p-8 rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden relative group"
                         >
@@ -125,6 +138,10 @@ export default function HomePage() {
                         </motion.div>
 
                         <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.3 }}
                             whileHover={{ y: -10 }}
                             className="p-8 rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden relative group"
                         >
@@ -184,12 +201,23 @@ export default function HomePage() {
             {/* 4. Site Content Map */}
             <section className="py-24 px-6 bg-slate-50 dark:bg-slate-900">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-center mb-16"
+                    >
                         <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Platform Modules & Access</h2>
                         <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Discover the comprehensive suite of tools built for every role in agriculture.</p>
-                    </div>
+                    </motion.div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ staggerChildren: 0.1 }}
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    >
                         {[
                             { name: "Home Page", desc: "Entry landing site summarizing system capabilities.", type: "Public" },
                             { name: "Pest Details Portal", desc: "Deep knowledge base of pests, symptoms, & treatments.", type: "Public" },
@@ -199,6 +227,10 @@ export default function HomePage() {
                             { name: "System Admin Panel", desc: "Platform stats, database updates, user roles.", type: "Admin" },
                         ].map((page, i) => (
                             <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.1 }}
                                 whileHover={{ scale: 1.02 }}
                                 key={i}
                                 className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
@@ -210,7 +242,7 @@ export default function HomePage() {
                                 <p className="text-sm text-slate-500 dark:text-slate-400">{page.desc}</p>
                             </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 </div>
             </section>
 
@@ -218,7 +250,13 @@ export default function HomePage() {
             <section className="py-24 px-6 bg-white dark:bg-slate-950">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
-                    <div className="space-y-12">
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                        className="space-y-12"
+                    >
                         <div>
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-semibold mb-4">
                                 <Users className="w-4 h-4" /> Target Audience
@@ -263,9 +301,15 @@ export default function HomePage() {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
-                    <div className="w-full aspect-square md:aspect-auto md:h-full min-h-[500px] bg-slate-100 dark:bg-slate-900 rounded-3xl overflow-hidden relative border border-slate-200 dark:border-slate-800 group">
+                    <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                        className="w-full aspect-square md:aspect-auto md:h-full min-h-[500px] bg-slate-100 dark:bg-slate-900 rounded-3xl overflow-hidden relative border border-slate-200 dark:border-slate-800 group"
+                    >
                         <img
                             src="/images/officer.png"
                             alt="Agricultural Officer reviewing data"
@@ -279,7 +323,7 @@ export default function HomePage() {
                                 <p className="text-slate-200 text-sm">Empowering Agriculture Officers with instant AI-backed data to support local farmers efficiently.</p>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                 </div>
             </section>
@@ -287,14 +331,25 @@ export default function HomePage() {
             {/* 6. User Roles and Responsibilities */}
             <section className="py-24 px-6 bg-slate-50 dark:bg-slate-900">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-center mb-16"
+                    >
                         <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">User Roles & Capabilities</h2>
                         <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Govi Guru provides dedicated workspaces depending on your role in the agricultural ecosystem.</p>
-                    </div>
+                    </motion.div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* Farmers */}
-                        <div className="bg-white dark:bg-slate-950 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-white dark:bg-slate-950 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
+                        >
                             <div className="absolute -right-4 -top-4 w-24 h-24 bg-govi-50 dark:bg-govi-900/30 rounded-full z-0"></div>
                             <UserCircle2 className="w-10 h-10 text-govi-600 mb-6 relative z-10" />
                             <h3 className="text-2xl font-bold mb-4 dark:text-white relative z-10">Farmers</h3>
@@ -304,10 +359,16 @@ export default function HomePage() {
                                 <li className="text-slate-600 dark:text-slate-400 text-sm flex gap-2"><ArrowRight className="w-4 h-4 text-govi-500 shrink-0" /> Request expert advice from agriculture officers.</li>
                                 <li className="text-slate-600 dark:text-slate-400 text-sm flex gap-2"><ArrowRight className="w-4 h-4 text-govi-500 shrink-0" /> Track past identification records in personal profile.</li>
                             </ul>
-                        </div>
+                        </motion.div>
 
                         {/* Agri Officer */}
-                        <div className="bg-white dark:bg-slate-950 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-white dark:bg-slate-950 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
+                        >
                             <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 dark:bg-blue-900/30 rounded-full z-0"></div>
                             <ShieldCheck className="w-10 h-10 text-blue-600 mb-6 relative z-10" />
                             <h3 className="text-2xl font-bold mb-4 dark:text-white relative z-10">Agriculture Officer</h3>
@@ -317,10 +378,16 @@ export default function HomePage() {
                                 <li className="text-slate-600 dark:text-slate-400 text-sm flex gap-2"><ArrowRight className="w-4 h-4 text-blue-500 shrink-0" /> Monitor field reports & provide guidance.</li>
                                 <li className="text-slate-600 dark:text-slate-400 text-sm flex gap-2"><ArrowRight className="w-4 h-4 text-blue-500 shrink-0" /> Collaborate to update educational materials.</li>
                             </ul>
-                        </div>
+                        </motion.div>
 
                         {/* Admin */}
-                        <div className="bg-white dark:bg-slate-950 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.3 }}
+                            className="bg-white dark:bg-slate-950 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden"
+                        >
                             <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-50 dark:bg-purple-900/30 rounded-full z-0"></div>
                             <ShieldAlert className="w-10 h-10 text-purple-600 mb-6 relative z-10" />
                             <h3 className="text-2xl font-bold mb-4 dark:text-white relative z-10">Admin</h3>
@@ -330,7 +397,7 @@ export default function HomePage() {
                                 <li className="text-slate-600 dark:text-slate-400 text-sm flex gap-2"><ArrowRight className="w-4 h-4 text-purple-500 shrink-0" /> Oversee platform operations and reported issues.</li>
                                 <li className="text-slate-600 dark:text-slate-400 text-sm flex gap-2"><ArrowRight className="w-4 h-4 text-purple-500 shrink-0" /> Generate usage reports & ensure data security.</li>
                             </ul>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </section>
@@ -338,32 +405,37 @@ export default function HomePage() {
             {/* 7. Technology Stack */}
             <section className="py-24 px-6 bg-white dark:bg-slate-950 border-y border-slate-200 dark:border-slate-800">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-center mb-16"
+                    >
                         <h2 className="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Powered By Modern Technology</h2>
                         <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">A robust and scalable architecture ensuring high availability and accurate image recognition.</p>
-                    </div>
+                    </motion.div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                             <Code className="w-10 h-10 text-govi-500 mb-4" />
                             <h4 className="font-bold mb-1 dark:text-white">Frontend</h4>
                             <p className="text-xs text-slate-500">React, HTML, CSS, JS</p>
-                        </div>
-                        <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                        </motion.div>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                             <Server className="w-10 h-10 text-blue-500 mb-4" />
                             <h4 className="font-bold mb-1 dark:text-white">Backend</h4>
                             <p className="text-xs text-slate-500">Python FastAPI & PHP</p>
-                        </div>
-                        <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                        </motion.div>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }} className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                             <MonitorSmartphone className="w-10 h-10 text-purple-500 mb-4" />
                             <h4 className="font-bold mb-1 dark:text-white">Machine Learning</h4>
                             <p className="text-xs text-slate-500">TensorFlow</p>
-                        </div>
-                        <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                        </motion.div>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 }} className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                             <Database className="w-10 h-10 text-emerald-500 mb-4" />
                             <h4 className="font-bold mb-1 dark:text-white">Database</h4>
                             <p className="text-xs text-slate-500">MySQL Storage</p>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </section>
@@ -373,7 +445,12 @@ export default function HomePage() {
                 <div className="absolute -top-64 -right-64 w-[500px] h-[500px] bg-govi-800 rounded-full blur-[100px] opacity-50"></div>
                 <div className="absolute -bottom-64 -left-64 w-[500px] h-[500px] bg-govi-600 rounded-full blur-[100px] opacity-20"></div>
 
-                <div className="max-w-4xl mx-auto relative z-10 text-center">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="max-w-4xl mx-auto relative z-10 text-center"
+                >
                     <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Transform Paddy Cultivation?</h2>
                     <p className="text-xl text-govi-100 mb-10 max-w-2xl mx-auto opacity-90">
                         Join the digital agriculture revolution. Connect with our experts, ask questions, or provide feedback on the Govi Guru platform.
@@ -387,7 +464,7 @@ export default function HomePage() {
                             Consult an Expert
                         </button>
                     </div>
-                </div>
+                </motion.div>
             </section>
 
         </div>

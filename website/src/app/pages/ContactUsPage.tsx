@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Phone, Mail, MapPin, Send, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function ContactUsPage() {
     const [formData, setFormData] = useState({
@@ -55,16 +56,25 @@ export default function ContactUsPage() {
 
     return (
         <div className="py-16 px-6 max-w-7xl mx-auto">
-            <div className="text-center mb-16">
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mb-16"
+            >
                 <h1 className="text-4xl font-bold mb-4 dark:text-white">Contact Our Experts</h1>
                 <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
                     Need assistance with the system or require direct agricultural advice? We are here to help you protect your harvest.
                 </p>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* Contact Info */}
-                <div className="space-y-8">
+                <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="space-y-8"
+                >
                     <div className="flex items-start gap-4">
                         <div className="w-12 h-12 bg-govi-100 dark:bg-govi-900/30 text-govi-600 dark:text-govi-400 rounded-full flex justify-center items-center shrink-0">
                             <Phone className="w-5 h-5" />
@@ -99,14 +109,23 @@ export default function ContactUsPage() {
                             </p>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Contact Form */}
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
+                <motion.div
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl"
+                >
                     <h3 className="text-2xl font-bold mb-6 dark:text-white">Send a Message</h3>
 
                     {success ? (
-                        <div className="text-center py-10">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="text-center py-10"
+                        >
                             <CheckCircle className="w-16 h-16 text-govi-500 mx-auto mb-4" />
                             <h3 className="text-xl font-bold dark:text-white mb-2">Message Sent!</h3>
                             <p className="text-slate-500 dark:text-slate-400 mb-6">Thank you for reaching out. A representative will get back to you shortly.</p>
@@ -117,9 +136,14 @@ export default function ContactUsPage() {
                             >
                                 Send another message
                             </button>
-                        </div>
+                        </motion.div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <motion.form
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            onSubmit={handleSubmit}
+                            className="space-y-4"
+                        >
                             {error && (
                                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
                                     <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
@@ -174,9 +198,9 @@ export default function ContactUsPage() {
                                     <>Send Message <Send className="w-5 h-5" /></>
                                 )}
                             </button>
-                        </form>
+                        </motion.form>
                     )}
-                </div>
+                </motion.div>
             </div>
         </div>
     );

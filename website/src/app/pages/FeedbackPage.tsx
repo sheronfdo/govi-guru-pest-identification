@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Send, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function FeedbackPage() {
     const [formData, setFormData] = useState({
@@ -57,16 +58,29 @@ export default function FeedbackPage() {
 
     return (
         <div className="py-16 px-6 max-w-4xl mx-auto">
-            <div className="text-center mb-12">
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mb-12"
+            >
                 <h1 className="text-4xl font-bold mb-4 dark:text-white">Your Feedback Matters</h1>
                 <p className="text-slate-500 dark:text-slate-400">
                     Help us improve "ගොවි ගුරු". Let us know if the AI identification was accurate or if you need additional tools for your paddy farming.
                 </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
+            <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl"
+            >
                 {success ? (
-                    <div className="text-center py-12">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-center py-12"
+                    >
                         <CheckCircle className="w-16 h-16 text-govi-500 mx-auto mb-4" />
                         <h3 className="text-2xl font-bold dark:text-white mb-2">Thank You!</h3>
                         <p className="text-slate-500 dark:text-slate-400 mb-8">Your feedback has been successfully submitted and will be reviewed by our team.</p>
@@ -77,9 +91,14 @@ export default function FeedbackPage() {
                         >
                             Submit Another Response
                         </button>
-                    </div>
+                    </motion.div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <motion.form
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        onSubmit={handleSubmit}
+                        className="space-y-6"
+                    >
                         {error && (
                             <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
                                 <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
@@ -154,9 +173,9 @@ export default function FeedbackPage() {
                                 <>Submit Feedback <Send className="w-5 h-5" /></>
                             )}
                         </button>
-                    </form>
+                    </motion.form>
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 }
