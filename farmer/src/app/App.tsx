@@ -48,6 +48,7 @@ export default function App() {
   const [fromResult, setFromResult] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState('');
+  const [nonPestNotice, setNonPestNotice] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedScanId, setSelectedScanId] = useState<number | null>(null);
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
@@ -68,6 +69,7 @@ export default function App() {
     if (!token) return;
     setScanning(true);
     setScanError('');
+    setNonPestNotice(null);
     setUploadProgress(0);
     try {
       const data = await new Promise<any>((resolve, reject) => {
@@ -141,8 +143,10 @@ export default function App() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Scan failed';
       if (/no pest detected/i.test(message)) {
-        setScanError('No pest detected. Please upload a clearer pest image and try again.');
+        setScanError('');
+        setNonPestNotice('No pest was detected in this image. Please take a clear, close-up photo of the insect or crop damage and try again.');
       } else {
+        setNonPestNotice(null);
         setScanError(message);
       }
     } finally {
@@ -218,6 +222,8 @@ export default function App() {
           onCapture={handleCapture}
           loading={scanning}
           error={scanError}
+          nonPestNotice={nonPestNotice}
+          onDismissNonPestNotice={() => setNonPestNotice(null)}
           progress={uploadProgress}
         />
       )}

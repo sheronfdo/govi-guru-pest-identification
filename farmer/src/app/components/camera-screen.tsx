@@ -6,10 +6,20 @@ interface CameraScreenProps {
   onCapture: (file: File) => Promise<void> | void;
   loading?: boolean;
   error?: string;
+  nonPestNotice?: string | null;
+  onDismissNonPestNotice?: () => void;
   progress?: number;
 }
 
-export function CameraScreen({ onBack, onCapture, loading = false, error, progress = 0 }: CameraScreenProps) {
+export function CameraScreen({
+  onBack,
+  onCapture,
+  loading = false,
+  error,
+  nonPestNotice = null,
+  onDismissNonPestNotice,
+  progress = 0,
+}: CameraScreenProps) {
   const [showCamera, setShowCamera] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -113,6 +123,10 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
     // Close preview so scan errors are visible on the main camera screen.
     clearPreview();
     onCapture(previewFile);
+  };
+
+  const dismissNonPestNotice = () => {
+    onDismissNonPestNotice?.();
   };
 
   return (
@@ -309,6 +323,58 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
             >
               Choose Another
             </button>
+          </div>
+        </div>
+      )}
+
+      {nonPestNotice && (
+        <div className="fixed inset-0 z-[60] bg-black/75 flex items-center justify-center px-6">
+          <div
+            className="w-full max-w-md rounded-2xl border p-5 shadow-2xl"
+            style={{ backgroundColor: '#111', borderColor: '#4CAF50' }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="rounded-full p-2" style={{ backgroundColor: 'rgba(76,175,80,0.15)' }}>
+                <Info className="w-5 h-5" style={{ color: '#4CAF50' }} />
+              </div>
+              <div>
+                <h3 className="text-white text-lg font-bold">No Pest Detected</h3>
+                <p className="text-sm text-gray-300 mt-1">{nonPestNotice}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <button
+                type="button"
+                className="w-full py-3 rounded-xl text-sm font-semibold text-white"
+                style={{ backgroundColor: '#4CAF50' }}
+                onClick={() => {
+                  dismissNonPestNotice();
+                  galleryInputRef.current?.click();
+                }}
+              >
+                Choose Another Photo
+              </button>
+              <button
+                type="button"
+                className="w-full py-3 rounded-xl text-sm font-semibold text-white"
+                style={{ backgroundColor: '#795548' }}
+                onClick={() => {
+                  dismissNonPestNotice();
+                  startCamera();
+                }}
+              >
+                Retake with Camera
+              </button>
+              <button
+                type="button"
+                className="w-full py-3 rounded-xl text-sm font-semibold"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff' }}
+                onClick={dismissNonPestNotice}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
