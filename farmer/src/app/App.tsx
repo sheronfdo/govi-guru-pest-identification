@@ -80,6 +80,15 @@ export default function App() {
           }
         };
         xhr.onload = () => {
+          const parsedBody = (() => {
+            if (!xhr.responseText) return null;
+            try {
+              return JSON.parse(xhr.responseText);
+            } catch {
+              return null;
+            }
+          })();
+
           if (xhr.status === 401) {
             localStorage.removeItem('gg_token');
             window.location.href = '/';
@@ -87,9 +96,26 @@ export default function App() {
             return;
           }
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(JSON.parse(xhr.responseText));
+            if (parsedBody && typeof parsedBody === 'object') {
+              resolve(parsedBody);
+            } else {
+              reject(new Error('Invalid scan response from server'));
+            }
           } else {
-            reject(new Error('Failed to analyze image'));
+            const detail =
+              parsedBody &&
+              typeof parsedBody === 'object' &&
+              'detail' in parsedBody &&
+              typeof parsedBody.detail === 'string'
+                ? parsedBody.detail
+                : null;
+
+            if (xhr.status === 422 && detail) {
+              reject(new Error(detail));
+              return;
+            }
+
+            reject(new Error(detail || 'Failed to analyze image'));
           }
         };
         xhr.onerror = () => reject(new Error('Network error'));
@@ -113,7 +139,12 @@ export default function App() {
       });
       setCurrentScreen('result');
     } catch (err) {
-      setScanError(err instanceof Error ? err.message : 'Scan failed');
+      const message = err instanceof Error ? err.message : 'Scan failed';
+      if (/no pest detected/i.test(message)) {
+        setScanError('No pest detected. Please upload a clearer pest image and try again.');
+      } else {
+        setScanError(message);
+      }
     } finally {
       setScanning(false);
       setUploadProgress(0);

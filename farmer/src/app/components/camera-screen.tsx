@@ -3,7 +3,7 @@ import { Camera, Image as ImageIcon, ArrowLeft, Info, X } from 'lucide-react';
 
 interface CameraScreenProps {
   onBack: () => void;
-  onCapture: (file: File) => void;
+  onCapture: (file: File) => Promise<void> | void;
   loading?: boolean;
   error?: string;
   progress?: number;
@@ -18,6 +18,7 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fallbackCameraInputRef = useRef<HTMLInputElement | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const handleFileChange = (file?: File | null) => {
     if (!file) return;
@@ -38,10 +39,7 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
         video: { facingMode: { ideal: 'environment' } },
         audio: false,
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+      streamRef.current = stream;
       setShowCamera(true);
     } catch (err) {
       setCameraError('Camera not available. Opening file picker instead.');
@@ -49,9 +47,19 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
     }
   };
 
+  useEffect(() => {
+    if (showCamera && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(console.error);
+    }
+  }, [showCamera]);
+
   const closeCamera = () => {
-    if (videoRef.current?.srcObject) {
-      stopStream(videoRef.current.srcObject as MediaStream);
+    if (streamRef.current) {
+      stopStream(streamRef.current);
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
     setShowCamera(false);
@@ -80,8 +88,8 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
 
   useEffect(() => {
     return () => {
-      if (videoRef.current?.srcObject) {
-        stopStream(videoRef.current.srcObject as MediaStream);
+      if (streamRef.current) {
+        stopStream(streamRef.current);
       }
     };
   }, []);
@@ -102,6 +110,8 @@ export function CameraScreen({ onBack, onCapture, loading = false, error, progre
 
   const confirmPreview = () => {
     if (!previewFile) return;
+    // Close preview so scan errors are visible on the main camera screen.
+    clearPreview();
     onCapture(previewFile);
   };
 

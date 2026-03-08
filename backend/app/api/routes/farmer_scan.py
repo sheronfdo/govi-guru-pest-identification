@@ -20,6 +20,10 @@ def _split_methods(text: str | None) -> list[str]:
     parts = [p.strip() for p in text.replace(";", "\n").splitlines()]
     return [p for p in parts if p]
 
+def _is_non_pest_class(class_name: str) -> bool:
+    normalized = "".join(ch for ch in class_name.lower() if ch.isalnum())
+    return normalized == "nonpest"
+
 
 @router.post("/scan", response_model=ScanResponse, dependencies=[Depends(require_role("farmer"))])
 async def scan_pest(
@@ -32,16 +36,23 @@ async def scan_pest(
     scan_image_url = get_object_url(object_name)
 
     prediction = predict_image_bytes(content)
+    predicted_class = prediction.class_name
+
+    if _is_non_pest_class(predicted_class):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="No pest detected in the uploaded image",
+        )
 
     pest = (
         db.query(Pest)
-        .filter(Pest.status == "active", Pest.name_en == prediction.class_name)
+        .filter(Pest.status == "active", Pest.name_en == predicted_class)
         .first()
     )
     if not pest:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Predicted pest '{prediction.class_name}' not found in database",
+            detail=f"Predicted pest '{predicted_class}' not found in database",
         )
 
     confidence = round(prediction.confidence, 2)
