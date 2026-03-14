@@ -57,4 +57,4 @@ def bytes_to_stream(data: bytes):
 
 def get_object_url(object_name: str) -> str:
     scheme = "https" if settings.minio_secure else "http"
-    return f"{scheme}://{settings.minio_endpoint}/{settings.minio_bucket}/{object_name}"
+    return f"{scheme}://{settings.get_minio_external_endpoint}/{settings.minio_bucket}/{object_name}"

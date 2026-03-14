@@ -27,10 +27,15 @@ class Settings(BaseSettings):
 
     # MinIO
     minio_endpoint: str = "localhost:9000"
+    minio_external_endpoint: str | None = None
     minio_access_key: str = "goviguru"
     minio_secret_key: str = "goviguru123"
     minio_bucket: str = "govi-guru"
     minio_secure: bool = False
+
+    @property
+    def get_minio_external_endpoint(self) -> str:
+        return self.minio_external_endpoint or self.minio_endpoint
 
     @property
     def sqlalchemy_database_uri(self) -> str:
