@@ -20,6 +20,7 @@ export default function Login({ onLogin }: LoginProps) {
   });
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
 
   const [signupForm, setSignupForm] = useState({
     fullName: '',
@@ -117,9 +118,17 @@ export default function Login({ onLogin }: LoginProps) {
         })
         .then(() => {
           toast.success('Registration successful! You can log in now.');
+          setSignupForm({
+            fullName: '',
+            officerId: '',
+            email: '',
+            region: '',
+            phone: '',
+            password: '',
+            confirmPassword: ''
+          });
           setTimeout(() => {
-            const loginTab = document.querySelector('[value="login"]') as HTMLElement;
-            loginTab?.click();
+            setActiveTab('login');
           }, 2000);
         })
         .catch((err) => {
@@ -158,7 +167,7 @@ export default function Login({ onLogin }: LoginProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
