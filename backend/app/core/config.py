@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Default admin bootstrap
     default_admin_email: str = "admin@goviguru.lk"
     default_admin_password: str = "admin123"
-    system_email_domain: str = "goviguru.local"
+    system_email_domain: str = "goviguru.lk"
 
     # Database
     mysql_host: str = "localhost"
