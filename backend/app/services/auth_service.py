@@ -57,20 +57,22 @@ class AuthService:
         return create_user(db, user)
 
     @staticmethod
-    def request_officer_access(db: Session, full_name: str, officer_id: str, region: str, phone: str, password: str) -> User:
+    def request_officer_access(db: Session, full_name: str, officer_id: str, email: str, region: str, phone: str, password: str) -> User:
         # In production, this should create a pending approval record.
-        domain = settings.system_email_domain
         full_name_value = full_name.strip()
         officer_id_value = officer_id.strip()
+        email_value = email.strip().lower()
         region_value = region.strip()
         phone_value = phone.strip()
 
         if get_user_by_officer_id(db, officer_id_value):
             raise ValueError("Officer ID already registered")
+        if get_user_by_email(db, email_value):
+            raise ValueError("Email already registered")
         if get_user_by_phone(db, phone_value):
             raise ValueError("Phone number already registered")
         user = User(
-            email=f"officer_{officer_id_value}@{domain}",
+            email=email_value,
             phone=phone_value,
             hashed_password=get_password_hash(password),
             full_name=full_name_value,

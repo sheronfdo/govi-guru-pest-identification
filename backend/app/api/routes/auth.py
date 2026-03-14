@@ -73,6 +73,7 @@ def request_officer_access(payload: OfficerAccessRequest, db: Session = Depends(
             db,
             payload.full_name,
             payload.officer_id,
+            payload.email,
             payload.region,
             payload.phone,
             payload.password,

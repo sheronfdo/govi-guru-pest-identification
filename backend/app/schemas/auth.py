@@ -65,6 +65,7 @@ class FarmerRegisterRequest(BaseModel):
 class OfficerAccessRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
     officer_id: str = Field(min_length=3, max_length=64)
+    email: EmailStr
     region: str = Field(min_length=2, max_length=128)
     phone: str = Field(min_length=7, max_length=20)
     password: str = Field(min_length=6, max_length=128)

@@ -24,6 +24,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [signupForm, setSignupForm] = useState({
     fullName: '',
     officerId: '',
+    email: '',
     region: '',
     phone: '',
     password: '',
@@ -71,11 +72,12 @@ export default function Login({ onLogin }: LoginProps) {
     e.preventDefault();
     const fullName = signupForm.fullName.trim();
     const officerId = signupForm.officerId.trim();
+    const email = signupForm.email.trim();
     const region = signupForm.region.trim();
     const phone = signupForm.phone.trim();
     const password = signupForm.password;
     setSignupError('');
-    if (!fullName || !officerId || !region || !phone || !password || !signupForm.confirmPassword) {
+    if (!fullName || !officerId || !email || !region || !phone || !password || !signupForm.confirmPassword) {
       setSignupError('Please fill in all required fields');
       return;
     }
@@ -91,7 +93,7 @@ export default function Login({ onLogin }: LoginProps) {
       toast.error('Password must be at least 6 characters');
       return;
     }
-    if (fullName && officerId && region) {
+    if (fullName && officerId && email && region) {
       setSignupLoading(true);
       fetch(`${apiBase}/auth/officers/request-access`, {
         method: 'POST',
@@ -99,6 +101,7 @@ export default function Login({ onLogin }: LoginProps) {
         body: JSON.stringify({
           full_name: fullName,
           officer_id: officerId,
+          email,
           region,
           phone,
           password,
@@ -129,16 +132,16 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ 
+      style={{
         background: 'linear-gradient(135deg, #1976D2 0%, #64B5F6 50%, #81C784 100%)',
       }}
     >
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}/>
+        }} />
       </div>
 
       <Card className="w-full max-w-md relative shadow-2xl">
@@ -160,7 +163,7 @@ export default function Login({ onLogin }: LoginProps) {
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="login">
               {/* Demo Credentials Alert */}
               <Alert className="mb-4 bg-blue-50 border-blue-200">
@@ -169,7 +172,7 @@ export default function Login({ onLogin }: LoginProps) {
                   <strong>Login:</strong> Use your Officer ID, phone, or email with your password
                 </AlertDescription>
               </Alert>
-              
+
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Officer ID / Email</Label>
@@ -201,7 +204,7 @@ export default function Login({ onLogin }: LoginProps) {
                 <div className="mt-3 text-sm text-red-600 text-center">{loginError}</div>
               )}
             </TabsContent>
-            
+
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
@@ -223,6 +226,17 @@ export default function Login({ onLogin }: LoginProps) {
                     placeholder="AGO-2024-XX-XXX"
                     value={signupForm.officerId}
                     onChange={(e) => setSignupForm({ ...signupForm, officerId: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signupEmail">Email</Label>
+                  <Input
+                    id="signupEmail"
+                    type="email"
+                    placeholder="officer@example.com"
+                    value={signupForm.email}
+                    onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                     required
                   />
                 </div>
